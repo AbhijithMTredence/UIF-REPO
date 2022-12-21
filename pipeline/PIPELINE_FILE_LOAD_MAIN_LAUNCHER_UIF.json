@@ -45,7 +45,14 @@
 				],
 				"userProperties": [],
 				"typeProperties": {
-					"items": ""
+					"items": {
+						"value": "@activity('LOOKUP_CONFIG_FILE').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(and(equals(split(item().type,',')[1],'EXCEL'),equals(item().execute_flag,'1')), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
 				}
 			},
 			{
@@ -59,7 +66,17 @@
 						]
 					}
 				],
-				"userProperties": []
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LOOKUP_CONFIG_FILE').output",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(and(equals(split(item().type,',')[1],'CSV'),equals(item().execute_flag,'1')), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
+				}
 			},
 			{
 				"name": "FILTER_JSON",
@@ -72,7 +89,17 @@
 						]
 					}
 				],
-				"userProperties": []
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LOOKUP_CONFIG_FILE').output",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(and(equals(split(item().type,',')[1],'JSON'),equals(item().execute_flag,'1')), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
+				}
 			},
 			{
 				"name": "FILTER_TEXT",
@@ -85,7 +112,17 @@
 						]
 					}
 				],
-				"userProperties": []
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LOOKUP_CONFIG_FILE').output",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(and(equals(split(item().type,',')[1],'TEXT'),equals(item().execute_flag,'1')), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
+				}
 			},
 			{
 				"name": "FILTER_PARQUET",
@@ -98,7 +135,17 @@
 						]
 					}
 				],
-				"userProperties": []
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LOOKUP_CONFIG_FILE').output",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(and(equals(split(item().type,',')[1],'PARQUET'),equals(item().execute_flag,'1')), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
+				}
 			},
 			{
 				"name": "FILTER_SQL",
@@ -151,6 +198,276 @@
 					}
 				],
 				"userProperties": []
+			},
+			{
+				"name": "EXCEL_FILE_LOAD_PROCESS",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_EXCEL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_EXCEL').output",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Execute Pipeline1",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FOREACH_CSV",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_CSV",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_CSV').output",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Execute Pipeline2",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FOREACH_JSON",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_JSON",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_JSON').output",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Execute Pipeline3",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FOREACH_TEXT",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_TEXT",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_TEXT').output",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Execute Pipeline4",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FOREACH_PARQUET",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_PARQUET",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_PARQUET').output",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Execute Pipeline5",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FOREACH_SQL",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_SQL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_SQL').output",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Execute Pipeline6",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FOREACH_HANA",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_HANA",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_HANA').output",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Execute Pipeline7",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FOREACH_ZIP",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_ZIP",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_ZIP').output",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Execute Pipeline8",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FOREACH_API",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_API",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_API').output",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Execute Pipeline9",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
 			}
 		],
 		"parameters": {
