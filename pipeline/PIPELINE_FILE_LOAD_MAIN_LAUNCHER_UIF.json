@@ -31,8 +31,152 @@
 						"type": "DatasetReference"
 					}
 				}
+			},
+			{
+				"name": "FILTER_EXCEL",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": ""
+				}
+			},
+			{
+				"name": "FILTER_CSV",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": []
+			},
+			{
+				"name": "FILTER_JSON",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": []
+			},
+			{
+				"name": "FILTER_TEXT",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": []
+			},
+			{
+				"name": "FILTER_PARQUET",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": []
+			},
+			{
+				"name": "FILTER_SQL",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": []
+			},
+			{
+				"name": "FILTER_HANA",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": []
+			},
+			{
+				"name": "FILTER_ZIP",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": []
+			},
+			{
+				"name": "FILTER_API",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": []
 			}
 		],
+		"parameters": {
+			"flow_key": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"run_key": {
+				"type": "string"
+			},
+			"object_name": {
+				"type": "string",
+				"defaultValue": "FILE_MOVEMENT"
+			},
+			"jobs": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"RESULT": {
+				"type": "String"
+			},
+			"error_check": {
+				"type": "String"
+			}
+		},
 		"annotations": []
 	}
 }
