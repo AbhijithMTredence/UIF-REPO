@@ -1,0 +1,17 @@
+{
+	"name": "DATASET_ADLS_JSON_FILE_UIF",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS_GEN2_UIF",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation"
+			}
+		},
+		"schema": {}
+	}
+}
