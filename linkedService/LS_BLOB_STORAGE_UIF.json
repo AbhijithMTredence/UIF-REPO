@@ -1,0 +1,19 @@
+{
+	"name": "LS_BLOB_STORAGE_UIF",
+	"properties": {
+		"description": "Use SAS token with all resource type allowed.",
+		"annotations": [],
+		"type": "AzureBlobStorage",
+		"typeProperties": {
+			"sasUri": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "LS_RGM_AKV_UIF",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "SECRET-BLOB-SAS-URI"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
+}

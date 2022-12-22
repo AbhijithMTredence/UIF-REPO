@@ -1,0 +1,11 @@
+{
+	"name": "LS_RGM_AKV_UIF",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://kv-gdlrgm-dev.vault.azure.net/"
+		}
+	}
+}
