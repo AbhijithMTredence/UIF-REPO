@@ -1,0 +1,36 @@
+{
+	"name": "DATASET_ADLS_BINARY_FOLDER_UIF",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS_GEN2_UIF",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"container_name": {
+				"type": "string"
+			},
+			"folder_name": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "ADLS/BINARY"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@dataset().folder_name",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().container_name",
+					"type": "Expression"
+				}
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

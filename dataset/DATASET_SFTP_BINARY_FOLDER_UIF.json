@@ -1,0 +1,25 @@
+{
+	"name": "DATASET_SFTP_BINARY_FOLDER_UIF",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_RGM_SFTP",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"sftp_path": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "SftpLocation",
+				"folderPath": {
+					"value": "@dataset().sftp_path",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

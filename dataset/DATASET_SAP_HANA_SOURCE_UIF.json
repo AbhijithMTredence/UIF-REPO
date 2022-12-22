@@ -1,0 +1,16 @@
+{
+	"name": "DATASET_SAP_HANA_SOURCE_UIF",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SAP_HANA_SOURCE_UIF",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "SAP_HANA/QUERY"
+		},
+		"annotations": [],
+		"type": "SapHanaTable",
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
