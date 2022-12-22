@@ -1,0 +1,325 @@
+{
+	"name": "PIPELINE_SQL_COUNT_UIF",
+	"properties": {
+		"activities": [
+			{
+				"name": "CHECK_COUNT_AND_FILTER",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "GET_COUNT",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@and(greaterOrEquals(int(variables('TOTAL_RECORDS')),2000000),not(equals(pipeline().parameters.filter_col,'')))",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "CHECK_DELTA_AND_LOAD_SMALL",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PIPELINE_SQL_SMALL_TBL_LOAD_UIF",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"source_table": {
+										"value": "@pipeline().parameters.source_table",
+										"type": "Expression"
+									},
+									"snowflake_table": {
+										"value": "@pipeline().parameters.snowflake_table",
+										"type": "Expression"
+									},
+									"if_delta": {
+										"value": "@pipeline().parameters.if_delta",
+										"type": "Expression"
+									},
+									"target_table_load": {
+										"value": "@pipeline().parameters.target_table_load",
+										"type": "Expression"
+									},
+									"snowflake_table_def": {
+										"value": "@pipeline().parameters.snowflake_table_def",
+										"type": "Expression"
+									},
+									"flow_key": {
+										"value": "@pipeline().parameters.flow_key",
+										"type": "Expression"
+									},
+									"run_key": {
+										"value": "@pipeline().parameters.run_key",
+										"type": "Expression"
+									},
+									"job_key": {
+										"value": "@pipeline().parameters.job_key",
+										"type": "Expression"
+									},
+									"query": {
+										"value": "@pipeline().parameters.query",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "CHECK_DELTA_AND_LOAD_BIG",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PIPELINE_SQL_BIG_SET_DELTA_UIF",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"source_table": {
+										"value": "@pipeline().parameters.source_table",
+										"type": "Expression"
+									},
+									"snowflake_table": {
+										"value": "@pipeline().parameters.snowflake_table",
+										"type": "Expression"
+									},
+									"if_delta": {
+										"value": "@pipeline().parameters.if_delta",
+										"type": "Expression"
+									},
+									"filter_col": {
+										"value": "@pipeline().parameters.filter_col",
+										"type": "Expression"
+									},
+									"adls_container": {
+										"value": "@pipeline().parameters.adls_container",
+										"type": "Expression"
+									},
+									"adls_folder": {
+										"value": "@pipeline().parameters.adls_folder",
+										"type": "Expression"
+									},
+									"target_table_load": {
+										"value": "@pipeline().parameters.target_table_load",
+										"type": "Expression"
+									},
+									"snowflake_table_def": {
+										"value": "@pipeline().parameters.snowflake_table_def",
+										"type": "Expression"
+									},
+									"flow_key": {
+										"value": "@pipeline().parameters.flow_key",
+										"type": "Expression"
+									},
+									"run_key": {
+										"value": "@pipeline().parameters.run_key",
+										"type": "Expression"
+									},
+									"job_key": {
+										"value": "@pipeline().parameters.job_key",
+										"type": "Expression"
+									},
+									"query": {
+										"value": "@pipeline().parameters.query",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "GET_COUNT",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.query,'')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "GET_COUNT_SRC_QRY",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "SELECT COUNT(*) AS TOTAL_RECORDS FROM (@{pipeline().parameters.query})",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "DATASET_SQL_SERVER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"database": {
+											"value": "@split(pipeline().parameters.source_table,'.')[0]",
+											"type": "Expression"
+										},
+										"table_name": {
+											"value": "@split(pipeline().parameters.source_table,'.')[1]",
+											"type": "Expression"
+										}
+									}
+								},
+								"firstRowOnly": false
+							}
+						},
+						{
+							"name": "Set variable",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "GET_COUNT_SRC_QRY",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "TOTAL_RECORDS",
+								"value": {
+									"value": "@string(activity('GET_COUNT_SRC_QRY').output.value[0].TOTAL_RECORDS)",
+									"type": "Expression"
+								}
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "GET_COUNT_SRC",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "SELECT COUNT(*) AS TOTAL_RECORDS FROM @{pipeline().parameters.source_table}",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "DATASET_SQL_SERVER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"database": {
+											"value": "@split(pipeline().parameters.source_table,'.')[0]",
+											"type": "Expression"
+										},
+										"table_name": {
+											"value": "@split(pipeline().parameters.source_table,'.')[1]",
+											"type": "Expression"
+										}
+									}
+								},
+								"firstRowOnly": false
+							}
+						},
+						{
+							"name": "Set variable1",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "GET_COUNT_SRC",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "TOTAL_RECORDS",
+								"value": {
+									"value": "@string(activity('GET_COUNT_SRC').output.value[0].TOTAL_RECORDS)",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"source_table": {
+				"type": "string"
+			},
+			"filter_col": {
+				"type": "string"
+			},
+			"adls_container": {
+				"type": "string"
+			},
+			"adls_folder": {
+				"type": "string"
+			},
+			"snowflake_table": {
+				"type": "string"
+			},
+			"if_delta": {
+				"type": "string"
+			},
+			"target_table_load": {
+				"type": "string"
+			},
+			"snowflake_table_def": {
+				"type": "string"
+			},
+			"flow_key": {
+				"type": "string"
+			},
+			"run_key": {
+				"type": "string"
+			},
+			"job_key": {
+				"type": "string"
+			},
+			"query": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"TOTAL_RECORDS": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "UIF/MAIN_PIPELINE_JOBS/TABLE_LOAD_FLOW"
+		},
+		"annotations": []
+	}
+}

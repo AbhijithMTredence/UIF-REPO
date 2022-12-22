@@ -1,0 +1,365 @@
+{
+	"name": "AUDIT_NAME_ADD_JSON_UIF",
+	"properties": {
+		"activities": [
+			{
+				"name": "GET_CHILD_ITEMS",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": {
+								"value": "@pipeline().parameters.adls_container",
+								"type": "Expression"
+							},
+							"folder_name": {
+								"value": "@pipeline().parameters.adls_folder",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "FOR_EACH_FILE",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "CALL_PROC",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_CHILD_ITEMS').output.Value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "COPY_FILE_ADLS_SNOWFLAKE",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"additionalColumns": [
+										{
+											"name": "AUDIT_SOURCEFILENAME",
+											"value": "$$FILEPATH"
+										}
+									],
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "SnowflakeSink",
+									"importSettings": {
+										"type": "SnowflakeImportCopyCommand"
+									}
+								},
+								"enableStaging": true,
+								"stagingSettings": {
+									"linkedServiceName": {
+										"referenceName": "BLOB_SAS",
+										"type": "LinkedServiceReference"
+									},
+									"path": "sf-staging"
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DATASET_ADLS_JSON_FILE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@pipeline().parameters.adls_folder",
+											"type": "Expression"
+										},
+										"file_name": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema_name": {
+											"value": "@pipeline().parameters.target_table_schema",
+											"type": "Expression"
+										},
+										"table_name": {
+											"value": "@pipeline().parameters.target_table",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "GET_ROW_COUNT",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "COPY_FILE_ADLS_SNOWFLAKE",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SnowflakeSource",
+									"query": {
+										"value": "SELECT COUNT(*) AS RECORDS FROM @{pipeline().parameters.target_table_schema}.@{pipeline().parameters.target_table}",
+										"type": "Expression"
+									},
+									"exportSettings": {
+										"type": "SnowflakeExportCopyCommand"
+									}
+								},
+								"dataset": {
+									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema_name": {
+											"value": "@pipeline().parameters.target_table_schema",
+											"type": "Expression"
+										},
+										"table_name": {
+											"value": "@pipeline().parameters.target_table",
+											"type": "Expression"
+										}
+									}
+								},
+								"firstRowOnly": false
+							}
+						},
+						{
+							"name": "ACTIVITY_LOG_PROC",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "GET_ROW_COUNT",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SnowflakeSource",
+									"query": {
+										"value": "CALL STAGING_GBL.SP_ACTIVITY_LOG(2,'@{pipeline().parameters.name}','@{pipeline().parameters.name} has @{activity('GET_ROW_COUNT').output.value[0].RECORDS} records','@{pipeline().parameters.run_key}','@{pipeline().parameters.job_key}','@{pipeline().parameters.flow_key}')",
+										"type": "Expression"
+									},
+									"exportSettings": {
+										"type": "SnowflakeExportCopyCommand"
+									}
+								},
+								"dataset": {
+									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema_name": "STAGING_GBL",
+										"table_name": "ACTIVITY_LOG"
+									}
+								},
+								"firstRowOnly": false
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "CALL_PROC",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "FILTER_CHILD_ITEMS",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SnowflakeSource",
+						"query": {
+							"value": "CALL STAGING_GBL.sp_generate_tbl_def_with_db(@{concat('''',pipeline().parameters.target_table_db,'''')},@{concat('''',pipeline().parameters.target_table_schema,'''')},@{concat('''',pipeline().parameters.target_table,'''')},@{concat('''',pipeline().parameters.target_table_load,'''')},@{concat('''',pipeline().parameters.target_table_def,'''')},@{pipeline().parameters.flow_key}, @{pipeline().parameters.run_key}, @{pipeline().parameters.job_key})",
+							"type": "Expression"
+						},
+						"exportSettings": {
+							"type": "SnowflakeExportCopyCommand"
+						}
+					},
+					"dataset": {
+						"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema_name": {
+								"value": "@pipeline().parameters.target_table_schema",
+								"type": "Expression"
+							},
+							"table_name": {
+								"value": "@pipeline().parameters.target_table",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "FILTER_CHILD_ITEMS",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "GET_CHILD_ITEMS",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('GET_CHILD_ITEMS').output.childItems",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@startswith(item().name, split(pipeline().parameters.name, '.')[0])",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"name": {
+				"type": "string"
+			},
+			"source_folder_path": {
+				"type": "string"
+			},
+			"adls_container": {
+				"type": "string"
+			},
+			"adls_folder": {
+				"type": "string"
+			},
+			"adls_arc_container": {
+				"type": "string"
+			},
+			"adls_arc_folder": {
+				"type": "string"
+			},
+			"target_table_schema": {
+				"type": "string"
+			},
+			"target_table": {
+				"type": "string"
+			},
+			"target_table_load": {
+				"type": "string"
+			},
+			"target_table_def": {
+				"type": "string"
+			},
+			"flow_key": {
+				"type": "string"
+			},
+			"run_key": {
+				"type": "string"
+			},
+			"job_key": {
+				"type": "string"
+			},
+			"skip_line": {
+				"type": "string"
+			},
+			"cdc_flag": {
+				"type": "string"
+			},
+			"cdc_columns": {
+				"type": "string"
+			},
+			"target_table_db": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "UIF/MAIN_PIPELINE_JOBS/FLOW"
+		},
+		"annotations": []
+	}
+}

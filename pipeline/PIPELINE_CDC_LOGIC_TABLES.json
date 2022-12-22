@@ -1,0 +1,82 @@
+{
+	"name": "PIPELINE_CDC_LOGIC_TABLES",
+	"properties": {
+		"activities": [
+			{
+				"name": "CDC_LOGIC_CHECK",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.cdc_flag,'1')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "CDC_LOGIC",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SnowflakeSource",
+									"query": {
+										"value": "CALL STAGING.SP_MERGE_STANDARD(@{pipeline().parameters.flow_key},@{pipeline().parameters.run_key},@{pipeline().parameters.job_key},@{pipeline().parameters.target_table},@{pipeline().parameters.source_table},@{pipeline().parameters.key_columns},@{pipeline().parameters.key_columns},'RGM',0)",
+										"type": "Expression"
+									},
+									"exportSettings": {
+										"type": "SnowflakeExportCopyCommand"
+									}
+								},
+								"dataset": {
+									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
+									"type": "DatasetReference"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"target_table": {
+				"type": "string"
+			},
+			"flow_key": {
+				"type": "string"
+			},
+			"run_key": {
+				"type": "string"
+			},
+			"job_key": {
+				"type": "string"
+			},
+			"cdc_flag": {
+				"type": "string"
+			},
+			"key_columns": {
+				"type": "string"
+			},
+			"source_table": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"target_table": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "UIF/FILE_LOAD_FLOW"
+		},
+		"annotations": []
+	}
+}

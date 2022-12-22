@@ -1,0 +1,358 @@
+{
+	"name": "PIPELINE_MASTER_GLOBAL_OBJECTS_INGESTION_UIF",
+	"properties": {
+		"activities": [
+			{
+				"name": "CHECK_LOAD_TYPE",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "RUN_KEY",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.load_type, 'FULL')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "SET_DEFAULT_DELTA_CONDITIONS",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PIPELINE_RUN_SNOWFLAKE_SP_UIF",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"schema_name": "STAGING_GBL",
+									"sp_name": "SP_PREREQ_FULL_LOAD",
+									"flow_key": {
+										"value": "@pipeline().parameters.flow_key",
+										"type": "Expression"
+									},
+									"run_key": {
+										"value": "@variables('run_key')",
+										"type": "Expression"
+									},
+									"job_key": "4001",
+									"object_name": "STAGING_GBL.SP_PREREQ_FULL_LOAD"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "LOAD_STAGE_TABLES",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CHECK_LOAD_TYPE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PIPELINE_LOAD_TO_SNOWFLAKE_STAGE_ALL_TABLES_UIF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"flow_key": {
+							"value": "@pipeline().parameters.flow_key",
+							"type": "Expression"
+						},
+						"run_key": {
+							"value": "@variables('run_key')",
+							"type": "Expression"
+						},
+						"metadata_container": {
+							"value": "drivers/@{toLower(pipeline().globalParameters.env)}",
+							"type": "Expression"
+						},
+						"config_folder": {
+							"value": "config/elt_process",
+							"type": "Expression"
+						},
+						"config_file": "config_execution_elt_hana.json",
+						"Jobs": {
+							"value": "@pipeline().parameters.Jobs",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "RUN_KEY",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "run_key",
+					"value": {
+						"value": "@pipeline().parameters.run_key",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "CHECK_ERROR_LOG",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "LOAD_STAGE_TABLES",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "CALL_TABLE_LOAD",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PIPELINE_NON_PARALLEL_ERROR_UIF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"flow_key": {
+							"value": "@pipeline().parameters.flow_key",
+							"type": "Expression"
+						},
+						"run_key": {
+							"value": "@pipeline().parameters.run_key",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "CALL_TABLE_LOAD",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CHECK_LOAD_TYPE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PIPELINE_TABLE_LOAD_LAUNCHER_UIF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"flow_key": {
+							"value": "@pipeline().parameters.flow_key",
+							"type": "Expression"
+						},
+						"run_key": {
+							"value": "@pipeline().parameters.run_key",
+							"type": "Expression"
+						},
+						"Jobs": {
+							"value": "@pipeline().parameters.Jobs",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "CLEAN_UP_ACTIVITY",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CDC_LOGIC",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PIPELINE_CLEANUP_FLOW_UIF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "ALERT_CLEANUP",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CLEAN_UP_ACTIVITY",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PIPELINE_SEND_STATUS_MAIL_UIF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"BODY_CONTENT": {
+							"value": "CLEANUP ACTIVITY FAILED FOR RUN ID - @{variables('run_key')}",
+							"type": "Expression"
+						},
+						"SUBJECT": {
+							"value": "RGM_Update : (@{pipeline().globalParameters.env}) RGM MASTER PIPELINE FAILED AT @{utcnow()} UTC ",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "RUN_END",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "CLEAN_UP_ACTIVITY",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SnowflakeSource",
+						"query": {
+							"value": "CALL STAGING_GBL.SP_RUN_END(@{pipeline().parameters.flow_key}, @{variables('run_key')})",
+							"type": "Expression"
+						},
+						"exportSettings": {
+							"type": "SnowflakeExportCopyCommand"
+						}
+					},
+					"dataset": {
+						"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "END_NOTIFICATION",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "RUN_END",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PIPELINE_SEND_STATUS_MAIL_UIF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"BODY_CONTENT": {
+							"value": "RGM MASTER PIPELINE COMPLETED FOR RUN ID - @{variables('run_key')} AT @{utcnow()} UTC - LOAD TYPE - @{pipeline().parameters.load_type}",
+							"type": "Expression"
+						},
+						"SUBJECT": {
+							"value": "RGM_Update : (@{pipeline().globalParameters.env}) RGM MASTER PIPELINE STATUS",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "CDC_LOGIC",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CHECK_ERROR_LOG",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "CDC_LOGIC_UIF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"flow_key": {
+							"value": "@pipeline().parameters.flow_key",
+							"type": "Expression"
+						},
+						"run_key": {
+							"value": "@pipeline().parameters.run_key",
+							"type": "Expression"
+						},
+						"Jobs": {
+							"value": "@pipeline().parameters.Jobs",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"flow_key": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"load_type": {
+				"type": "string"
+			},
+			"run_key": {
+				"type": "string"
+			},
+			"Jobs": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"run_key": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "UIF/MAIN_PIPELINE_JOBS"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-04-22T11:42:47Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,722 @@
+{
+	"name": "PIPELINE_EXCEL_FILE_LAUNCHER_UIF",
+	"properties": {
+		"activities": [
+			{
+				"name": "CHECK_JOB_STATUS",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "SET JOB_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@not(equals(activity('JOB_START').output.firstRow.SP_JOB_START, 0))",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "JOB_FAILURE",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "LOAD_EXCEL_FILES",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SnowflakeSource",
+									"query": {
+										"value": "CALL STAGING_GBL.SP_ERROR_LOG_ETL('@{pipeline().parameters.object_name}', @{pipeline().parameters.flow_key}, @{pipeline().parameters.job_key}, @{pipeline().parameters.run_key}, @{activity('JOB_START').output.firstRow.SP_JOB_START}, 'Excel file movement for - @{pipeline().parameters.name} - load failed', '');",
+										"type": "Expression"
+									},
+									"exportSettings": {
+										"type": "SnowflakeExportCopyCommand"
+									}
+								},
+								"dataset": {
+									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
+									"type": "DatasetReference"
+								},
+								"firstRowOnly": true
+							}
+						},
+						{
+							"name": "FAIL_PIPELINE",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "JOB_FAILURE",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SnowflakeSource",
+									"query": "CALL DUMMY.DUMMY",
+									"exportSettings": {
+										"type": "SnowflakeExportCopyCommand"
+									}
+								},
+								"dataset": {
+									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
+									"type": "DatasetReference"
+								}
+							}
+						},
+						{
+							"name": "CHECK_ERROR",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "LOAD_EXCEL_FILES",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SnowflakeSource",
+									"query": {
+										"value": "CALL STAGING_GBL.SP_CHECK_FOR_ERROR(@{pipeline().parameters.flow_key}, @{pipeline().parameters.job_key}, @{pipeline().parameters.run_key});",
+										"type": "Expression"
+									},
+									"exportSettings": {
+										"type": "SnowflakeExportCopyCommand"
+									}
+								},
+								"dataset": {
+									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
+									"type": "DatasetReference"
+								}
+							}
+						},
+						{
+							"name": "SET_ERROR_CHECK",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "CHECK_ERROR",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "error_check",
+								"value": {
+									"value": "@activity('CHECK_ERROR').output.firstRow.SP_CHECK_FOR_ERROR",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "GETTING ERROR FROM ERROR LOG",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "JOB_FAILURE",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SnowflakeSource",
+									"query": {
+										"value": "SELECT ERROR_TYPE, ERROR_CODE, ERROR_STATE, ERROR_MESSAGE, IMPACTED_OBJECT, ACTUAL_ACTIVITY, INSERTED_ON_TS FROM STAGING_GBL.ERROR_LOG ORDER BY INSERTED_ON_TS DESC",
+										"type": "Expression"
+									},
+									"exportSettings": {
+										"type": "SnowflakeExportCopyCommand"
+									}
+								},
+								"dataset": {
+									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema_name": "INT",
+										"table_name": "ERROR_LOG"
+									}
+								}
+							}
+						},
+						{
+							"name": "RESULT",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "GETTING ERROR FROM ERROR LOG",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "RESULT",
+								"value": {
+									"value": "<tr>\n<td>@{activity('GETTING ERROR FROM ERROR LOG').output.firstRow.ERROR_TYPE}</td>\n<td>@{activity('GETTING ERROR FROM ERROR LOG').output.firstRow.ERROR_CODE}</td>\n<td>@{activity('GETTING ERROR FROM ERROR LOG').output.firstRow.ERROR_STATE}</td>\n<td>@{activity('GETTING ERROR FROM ERROR LOG').output.firstRow.ERROR_MESSAGE}</td>\n<td>@{activity('GETTING ERROR FROM ERROR LOG').output.firstRow.IMPACTED_OBJECT}</td>\n<td>@{activity('GETTING ERROR FROM ERROR LOG').output.firstRow.ACTUAL_ACTIVITY}</td>\n<td>@{activity('GETTING ERROR FROM ERROR LOG').output.firstRow.INSERTED_ON_TS}</td>\n</tr>",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "CALL ALERT PIPELINE",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "RESULT",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PIPELINE_SEND_ERRORLOG_RESULTS_UIF",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"BODY_CONTENT": {
+										"value": "@variables('RESULT')",
+										"type": "Expression"
+									},
+									"SUBJECT": {
+										"value": "RGM_Update : (@{pipeline().globalParameters.env}) RGM - MASTER PIPELINE FAILED AT @{utcnow()} UTC ",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "LOAD_EXCEL_FILES",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PIPELINE_FILE_LOAD_EXCEL_CHILD_UIF",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"name": {
+										"value": "@pipeline().parameters.name",
+										"type": "Expression"
+									},
+									"source_folder_path": {
+										"value": "@pipeline().parameters.source_folder_path",
+										"type": "Expression"
+									},
+									"adls_container": {
+										"value": "@pipeline().parameters.adls_container",
+										"type": "Expression"
+									},
+									"adls_folder": {
+										"value": "@pipeline().parameters.adls_folder",
+										"type": "Expression"
+									},
+									"adls_arc_container": {
+										"value": "@pipeline().parameters.adls_arc_container",
+										"type": "Expression"
+									},
+									"adls_arc_folder": {
+										"value": "@pipeline().parameters.adls_arc_folder",
+										"type": "Expression"
+									},
+									"target_table_schema": {
+										"value": "@pipeline().parameters.target_table_schema",
+										"type": "Expression"
+									},
+									"target_table": {
+										"value": "@pipeline().parameters.target_table",
+										"type": "Expression"
+									},
+									"target_table_load": {
+										"value": "@pipeline().parameters.target_table_load",
+										"type": "Expression"
+									},
+									"target_table_def": {
+										"value": "@pipeline().parameters.target_table_def",
+										"type": "Expression"
+									},
+									"flow_key": {
+										"value": "@pipeline().parameters.flow_key",
+										"type": "Expression"
+									},
+									"run_key": {
+										"value": "@pipeline().parameters.run_key",
+										"type": "Expression"
+									},
+									"job_key": {
+										"value": "@pipeline().parameters.job_key",
+										"type": "Expression"
+									},
+									"sheet": {
+										"value": "@pipeline().parameters.sheet",
+										"type": "Expression"
+									},
+									"skip_line": {
+										"value": "@pipeline().parameters.skip_line",
+										"type": "Expression"
+									},
+									"cdc_flag": {
+										"value": "@pipeline().parameters.cdc_flag",
+										"type": "Expression"
+									},
+									"cdc_columns": {
+										"value": "@pipeline().parameters.cdc_columns",
+										"type": "Expression"
+									},
+									"file_type": {
+										"value": "@pipeline().parameters.file_type",
+										"type": "Expression"
+									},
+									"isNotebook": {
+										"value": "@pipeline().parameters.isNotebook",
+										"type": "Expression"
+									},
+									"notebookPath": {
+										"value": "@pipeline().parameters.notebookPath",
+										"type": "Expression"
+									},
+									"isDQNotebook": {
+										"value": "@pipeline().parameters.isDQNotebook",
+										"type": "Expression"
+									},
+									"DQNotebookPath": {
+										"value": "@pipeline().parameters.DQNotebookPath",
+										"type": "Expression"
+									},
+									"recipients": {
+										"value": "@pipeline().parameters.recipients",
+										"type": "Expression"
+									},
+									"PipelineID": {
+										"value": "@pipeline().parameters.PipelineID",
+										"type": "Expression"
+									},
+									"target_table_db": {
+										"value": "@pipeline().parameters.target_table_db",
+										"type": "Expression"
+									},
+									"job_start": {
+										"value": "@variables('job_start')",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "SP_FAILURE_CHECK",
+				"type": "Switch",
+				"dependsOn": [
+					{
+						"activity": "CHECK_JOB_STATUS",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@variables('error_check')",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "SUCCESS",
+							"activities": [
+								{
+									"name": "JOB_END",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "SnowflakeSource",
+											"query": {
+												"value": "CALL STAGING_GBL.SP_JOB_END(@{activity('JOB_START').output.firstRow.SP_JOB_START}, @{pipeline().parameters.job_key}, @{pipeline().parameters.flow_key}, @{pipeline().parameters.run_key});",
+												"type": "Expression"
+											},
+											"exportSettings": {
+												"type": "SnowflakeExportCopyCommand"
+											}
+										},
+										"dataset": {
+											"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
+											"type": "DatasetReference"
+										},
+										"firstRowOnly": true
+									}
+								}
+							]
+						},
+						{
+							"value": "FAIL",
+							"activities": [
+								{
+									"name": "FAIL_PIPELINE1",
+									"type": "Lookup",
+									"dependsOn": [
+										{
+											"activity": "JOB_FAILURE1",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "SnowflakeSource",
+											"query": "CALL DUMMY.DUMMY",
+											"exportSettings": {
+												"type": "SnowflakeExportCopyCommand"
+											}
+										},
+										"dataset": {
+											"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
+											"type": "DatasetReference"
+										}
+									}
+								},
+								{
+									"name": "JOB_FAILURE1",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "SnowflakeSource",
+											"query": {
+												"value": "CALL STAGING_GBL.SP_ERROR_LOG_ETL('@{pipeline().parameters.object_name}', @{pipeline().parameters.flow_key}, @{pipeline().parameters.job_key}, @{pipeline().parameters.run_key}, @{activity('JOB_START').output.firstRow.SP_JOB_START}, 'Check error log table for the error message', '');",
+												"type": "Expression"
+											},
+											"exportSettings": {
+												"type": "SnowflakeExportCopyCommand"
+											}
+										},
+										"dataset": {
+											"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
+											"type": "DatasetReference"
+										},
+										"firstRowOnly": true
+									}
+								},
+								{
+									"name": "GETTING ERROR FROM ERROR LOG1",
+									"type": "Lookup",
+									"dependsOn": [
+										{
+											"activity": "JOB_FAILURE1",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "SnowflakeSource",
+											"query": {
+												"value": "SELECT ERROR_TYPE, ERROR_CODE, ERROR_STATE, ERROR_MESSAGE, IMPACTED_OBJECT, ACTUAL_ACTIVITY, INSERTED_ON_TS FROM STAGING_GBL.ERROR_LOG ORDER BY INSERTED_ON_TS DESC",
+												"type": "Expression"
+											},
+											"exportSettings": {
+												"type": "SnowflakeExportCopyCommand"
+											}
+										},
+										"dataset": {
+											"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+											"type": "DatasetReference",
+											"parameters": {
+												"schema_name": "INT",
+												"table_name": "ERROR_LOG"
+											}
+										}
+									}
+								},
+								{
+									"name": "RESULT1",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "GETTING ERROR FROM ERROR LOG1",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "RESULT",
+										"value": {
+											"value": "<tr>\n<td>@{activity('GETTING ERROR FROM ERROR LOG1').output.firstRow.ERROR_TYPE}</td>\n<td>@{activity('GETTING ERROR FROM ERROR LOG1').output.firstRow.ERROR_CODE}</td>\n<td>@{activity('GETTING ERROR FROM ERROR LOG1').output.firstRow.ERROR_STATE}</td>\n<td>@{activity('GETTING ERROR FROM ERROR LOG1').output.firstRow.ERROR_MESSAGE}</td>\n<td>@{activity('GETTING ERROR FROM ERROR LOG1').output.firstRow.IMPACTED_OBJECT}</td>\n<td>@{activity('GETTING ERROR FROM ERROR LOG1').output.firstRow.ACTUAL_ACTIVITY}</td>\n<td>@{activity('GETTING ERROR FROM ERROR LOG1').output.firstRow.INSERTED_ON_TS}</td>\n</tr>",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "CALL ALERT PIPELINE1",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "RESULT1",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PIPELINE_SEND_ERRORLOG_RESULTS_UIF",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"BODY_CONTENT": {
+												"value": "@variables('RESULT')",
+												"type": "Expression"
+											},
+											"SUBJECT": {
+												"value": "RGM_Update : (@{pipeline().globalParameters.env}) RGM - MASTER PIPELINE FAILED AT @{utcnow()} UTC ",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "JOB_START",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SnowflakeSource",
+						"query": {
+							"value": "CALL STAGING_GBL.SP_JOB_START(@{pipeline().parameters.run_key}, @{pipeline().parameters.job_key}, '@{pipeline().parameters.object_name}');",
+							"type": "Expression"
+						},
+						"exportSettings": {
+							"type": "SnowflakeExportCopyCommand"
+						}
+					},
+					"dataset": {
+						"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "SET JOB_START",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "JOB_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "job_start",
+					"value": {
+						"value": "@string(activity('JOB_START').output.firstRow.SP_JOB_START)",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"flow_key": {
+				"type": "string"
+			},
+			"run_key": {
+				"type": "string"
+			},
+			"job_key": {
+				"type": "string"
+			},
+			"object_name": {
+				"type": "string"
+			},
+			"name": {
+				"type": "string"
+			},
+			"source_folder_path": {
+				"type": "string"
+			},
+			"adls_container": {
+				"type": "string"
+			},
+			"adls_folder": {
+				"type": "string"
+			},
+			"adls_arc_container": {
+				"type": "string"
+			},
+			"adls_arc_folder": {
+				"type": "string"
+			},
+			"target_table_schema": {
+				"type": "string"
+			},
+			"target_table": {
+				"type": "string"
+			},
+			"target_table_load": {
+				"type": "string"
+			},
+			"target_table_def": {
+				"type": "string"
+			},
+			"sheet": {
+				"type": "string"
+			},
+			"skip_line": {
+				"type": "int"
+			},
+			"cdc_flag": {
+				"type": "string"
+			},
+			"cdc_columns": {
+				"type": "string"
+			},
+			"isNotebook": {
+				"type": "string"
+			},
+			"notebookPath": {
+				"type": "string"
+			},
+			"file_type": {
+				"type": "string"
+			},
+			"isDQNotebook": {
+				"type": "string"
+			},
+			"DQNotebookPath": {
+				"type": "string"
+			},
+			"recipients": {
+				"type": "string"
+			},
+			"PipelineID": {
+				"type": "string"
+			},
+			"target_table_db": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"RESULT": {
+				"type": "String"
+			},
+			"error_check": {
+				"type": "String"
+			},
+			"job_start": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "UIF/FILE_LOAD_FLOW"
+		},
+		"annotations": []
+	}
+}

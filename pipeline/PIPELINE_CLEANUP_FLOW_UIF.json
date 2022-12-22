@@ -1,0 +1,949 @@
+{
+	"name": "PIPELINE_CLEANUP_FLOW_UIF",
+	"properties": {
+		"activities": [
+			{
+				"name": "READ_ZIP_CONFIG",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "DATASET_ADLS_JSON_FILE_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": {
+								"value": "drivers/@{toLower(pipeline().globalParameters.env)}",
+								"type": "Expression"
+							},
+							"folder_name": "config/file_movement",
+							"file_name": "config_execution_zip_load.json"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "READ_FILES_CONFIG",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "DATASET_ADLS_JSON_FILE_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": {
+								"value": "drivers/@{toLower(pipeline().globalParameters.env)}",
+								"type": "Expression"
+							},
+							"folder_name": "config/file_movement",
+							"file_name": "config_execution_file_load.json"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "READ_TABLES_CONFIG",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "DATASET_ADLS_JSON_FILE_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": {
+								"value": "drivers/@{toLower(pipeline().globalParameters.env)}",
+								"type": "Expression"
+							},
+							"folder_name": "config/elt_process",
+							"file_name": "config_execution_elt_rdbms.json"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ZIP_ND",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "READ_ZIP_CONFIG",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('READ_ZIP_CONFIG').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(equals(item().deleteND,'1'),equals(item().execute_flag,'1'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "FILE_ND",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "READ_FILES_CONFIG",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('READ_FILES_CONFIG').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(equals(item().deleteND,'1'),equals(item().execute_flag,'1'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ZIP_ADLS",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "READ_ZIP_CONFIG",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('READ_ZIP_CONFIG').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(equals(item().deleteADLS,'1'),equals(item().execute_flag,'1'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "FILE_ADLS",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "READ_FILES_CONFIG",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('READ_FILES_CONFIG').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(equals(item().deleteADLS,'1'),equals(item().execute_flag,'1'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "TABLE_ADLS",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "READ_TABLES_CONFIG",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('READ_TABLES_CONFIG').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(equals(item().deleteADLS,'1'),equals(item().execute_flag,'1'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "FOREACH2",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILE_ADLS",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILE_ADLS').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "FILTER_FILE_BY_TYPE_ADLS",
+							"type": "Switch",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@item().type",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "EXCEL",
+										"activities": [
+											{
+												"name": "DELETE_EXCEL_FILE_ADLS",
+												"type": "Delete",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "DATASET_ADLS_BINARY_FILE_UIF",
+														"type": "DatasetReference",
+														"parameters": {
+															"container_name": {
+																"value": "@item().adls_container",
+																"type": "Expression"
+															},
+															"folder_name": {
+																"value": "@item().adls_folder",
+																"type": "Expression"
+															},
+															"file_name": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													},
+													"enableLogging": false,
+													"storeSettings": {
+														"type": "AzureBlobFSReadSettings",
+														"recursive": true,
+														"wildcardFileName": {
+															"value": "@{if(contains(item().name,'.xlsx'),replace(item().name,'.xlsx','*.xlsx'),replace(item().name,'.xlsm','*.xlsm'))}",
+															"type": "Expression"
+														},
+														"enablePartitionDiscovery": false
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "CSV",
+										"activities": [
+											{
+												"name": "DELETE_CSV_FILE_ADLS",
+												"type": "Delete",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "DATASET_ADLS_BINARY_FILE_UIF",
+														"type": "DatasetReference",
+														"parameters": {
+															"container_name": {
+																"value": "@item().adls_container",
+																"type": "Expression"
+															},
+															"folder_name": {
+																"value": "@item().adls_folder",
+																"type": "Expression"
+															},
+															"file_name": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													},
+													"enableLogging": false,
+													"storeSettings": {
+														"type": "AzureBlobFSReadSettings",
+														"recursive": true,
+														"wildcardFileName": {
+															"value": "@{replace(item().name,'.csv','*.csv')}",
+															"type": "Expression"
+														},
+														"enablePartitionDiscovery": false
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "TEXT",
+										"activities": [
+											{
+												"name": "DELETE_TEXT_FILE_ADLS",
+												"type": "Delete",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "DATASET_ADLS_BINARY_FILE_UIF",
+														"type": "DatasetReference",
+														"parameters": {
+															"container_name": {
+																"value": "@item().adls_container",
+																"type": "Expression"
+															},
+															"folder_name": {
+																"value": "@item().adls_folder",
+																"type": "Expression"
+															},
+															"file_name": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													},
+													"enableLogging": false,
+													"storeSettings": {
+														"type": "AzureBlobFSReadSettings",
+														"recursive": true,
+														"wildcardFileName": {
+															"value": "@{replace(item().name,'.txt','*.txt')}",
+															"type": "Expression"
+														},
+														"enablePartitionDiscovery": false
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "JSON",
+										"activities": [
+											{
+												"name": "DELETE_JSON_FILE_ADLS",
+												"type": "Delete",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "DATASET_ADLS_BINARY_FILE_UIF",
+														"type": "DatasetReference",
+														"parameters": {
+															"container_name": {
+																"value": "@item().adls_container",
+																"type": "Expression"
+															},
+															"folder_name": {
+																"value": "@item().adls_folder",
+																"type": "Expression"
+															},
+															"file_name": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													},
+													"enableLogging": false,
+													"storeSettings": {
+														"type": "AzureBlobFSReadSettings",
+														"recursive": true,
+														"wildcardFileName": {
+															"value": "@{replace(item().name,'.json','*.json')}",
+															"type": "Expression"
+														},
+														"enablePartitionDiscovery": false
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "PARQUET",
+										"activities": [
+											{
+												"name": "DELETE_PARQUET_FILE_ADLS",
+												"type": "Delete",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "DATASET_ADLS_BINARY_FILE_UIF",
+														"type": "DatasetReference",
+														"parameters": {
+															"container_name": {
+																"value": "@item().adls_container",
+																"type": "Expression"
+															},
+															"folder_name": {
+																"value": "@item().adls_folder",
+																"type": "Expression"
+															},
+															"file_name": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													},
+													"enableLogging": false,
+													"storeSettings": {
+														"type": "AzureBlobFSReadSettings",
+														"recursive": true,
+														"wildcardFileName": {
+															"value": "@{replace(item().name,'.parquet','*.parquet')}",
+															"type": "Expression"
+														},
+														"enablePartitionDiscovery": false
+													}
+												}
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FOREACH1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILE_ND",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILE_ND').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "FILTER_BY_FILE_TYPE_ND",
+							"type": "Switch",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@item().type",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "EXCEL",
+										"activities": [
+											{
+												"name": "DELETE_EXCEL_FILE_ND",
+												"type": "Delete",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "DATASET_FILE_SYSTEM_BINARY_FILE_UIF",
+														"type": "DatasetReference",
+														"parameters": {
+															"folder_name": {
+																"value": "@item().source_folder_path",
+																"type": "Expression"
+															},
+															"file_name": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													},
+													"enableLogging": false,
+													"storeSettings": {
+														"type": "FileServerReadSettings",
+														"recursive": true,
+														"wildcardFileName": {
+															"value": "@{if(contains(item().name,'.xlsx'),replace(item().name,'.xlsx','*.xlsx'),replace(item().name,'.xlsm','*.xlsm'))}",
+															"type": "Expression"
+														},
+														"enablePartitionDiscovery": false
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "CSV",
+										"activities": [
+											{
+												"name": "DELETE_CSV_FILE_ND",
+												"type": "Delete",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "DATASET_FILE_SYSTEM_BINARY_FILE_UIF",
+														"type": "DatasetReference",
+														"parameters": {
+															"folder_name": {
+																"value": "@item().source_folder_path",
+																"type": "Expression"
+															},
+															"file_name": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													},
+													"enableLogging": false,
+													"storeSettings": {
+														"type": "FileServerReadSettings",
+														"recursive": true,
+														"wildcardFileName": {
+															"value": "@{replace(item().name,'.csv','*.csv')}",
+															"type": "Expression"
+														},
+														"enablePartitionDiscovery": false
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "TEXT",
+										"activities": [
+											{
+												"name": "DELETE_TEXT_FILE_ND",
+												"type": "Delete",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "DATASET_FILE_SYSTEM_BINARY_FILE_UIF",
+														"type": "DatasetReference",
+														"parameters": {
+															"folder_name": {
+																"value": "@item().source_folder_path",
+																"type": "Expression"
+															},
+															"file_name": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													},
+													"enableLogging": false,
+													"storeSettings": {
+														"type": "FileServerReadSettings",
+														"recursive": true,
+														"wildcardFileName": {
+															"value": "@{replace(item().name,'.txt','*.txt')}",
+															"type": "Expression"
+														},
+														"enablePartitionDiscovery": false
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "JSON",
+										"activities": [
+											{
+												"name": "DELETE_JSON_FILE_ND",
+												"type": "Delete",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "DATASET_FILE_SYSTEM_BINARY_FILE_UIF",
+														"type": "DatasetReference",
+														"parameters": {
+															"folder_name": {
+																"value": "@item().source_folder_path",
+																"type": "Expression"
+															},
+															"file_name": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													},
+													"enableLogging": false,
+													"storeSettings": {
+														"type": "FileServerReadSettings",
+														"recursive": true,
+														"wildcardFileName": {
+															"value": "@{replace(item().name,'.json','*.json')}",
+															"type": "Expression"
+														},
+														"enablePartitionDiscovery": false
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "PARQUET",
+										"activities": [
+											{
+												"name": "DELETE_PARQUET_FILE_ND",
+												"type": "Delete",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "DATASET_FILE_SYSTEM_BINARY_FILE_UIF",
+														"type": "DatasetReference",
+														"parameters": {
+															"folder_name": {
+																"value": "@item().source_folder_path",
+																"type": "Expression"
+															},
+															"file_name": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													},
+													"enableLogging": false,
+													"storeSettings": {
+														"type": "FileServerReadSettings",
+														"recursive": true,
+														"wildcardFileName": {
+															"value": "@{replace(item().name,'.parquet','*.parquet')}",
+															"type": "Expression"
+														},
+														"enablePartitionDiscovery": false
+													}
+												}
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FOREACH3",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "ZIP_ND",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('ZIP_ND').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "DELETE_ZIP_ND",
+							"type": "Delete",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "DATASET_FILE_SYSTEM_BINARY_FILE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"folder_name": {
+											"value": "@item().fs_folder_path_zip",
+											"type": "Expression"
+										},
+										"file_name": {
+											"value": "@item().fs_zip_file_name",
+											"type": "Expression"
+										}
+									}
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "FileServerReadSettings",
+									"recursive": true,
+									"wildcardFileName": {
+										"value": "@{replace(item().fs_zip_file_name,'.zip','*.zip')}",
+										"type": "Expression"
+									},
+									"enablePartitionDiscovery": false
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FOREACH4",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "ZIP_ADLS",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('ZIP_ADLS').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "DELETE_ZIP_ADLS",
+							"type": "Delete",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@item().adls_container_zip",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@item().adls_folder_zip",
+											"type": "Expression"
+										}
+									}
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFileName": {
+										"value": "@{replace(item().adls_file_zip,'.zip','*.zip')}",
+										"type": "Expression"
+									},
+									"enablePartitionDiscovery": false
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FOREACH5",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "TABLE_ADLS",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('TABLE_ADLS').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "DELETE_TABLE_PART_FILES_ADLS",
+							"type": "Delete",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@item().adls_container",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@item().adls_folder",
+											"type": "Expression"
+										}
+									}
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"folder": {
+			"name": "UIF/MAIN_PIPELINE_JOBS"
+		},
+		"annotations": []
+	}
+}

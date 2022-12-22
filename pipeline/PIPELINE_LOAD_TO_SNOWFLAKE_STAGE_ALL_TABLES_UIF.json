@@ -1,0 +1,249 @@
+{
+	"name": "PIPELINE_LOAD_TO_SNOWFLAKE_STAGE_ALL_TABLES_UIF",
+	"properties": {
+		"activities": [
+			{
+				"name": "LOOKUP_CONFIG_FILE",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "DATASET_ADLS_JSON_FILE_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": {
+								"value": "@pipeline().parameters.metadata_container",
+								"type": "Expression"
+							},
+							"folder_name": {
+								"value": "@pipeline().parameters.config_folder",
+								"type": "Expression"
+							},
+							"file_name": {
+								"value": "@pipeline().parameters.config_file",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "LOOP_ON_CONFIG_FILE",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "CHECK_EXECUTE_FLAG",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('CHECK_EXECUTE_FLAG').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 50,
+					"activities": [
+						{
+							"name": "QUERY_TYPE_CHECK",
+							"type": "IfCondition",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@equals(item().query_type, 'SIMPLE')",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "LOAD_USING_COMPLEX_QUERY",
+										"type": "ExecutePipeline",
+										"dependsOn": [],
+										"userProperties": [],
+										"typeProperties": {
+											"pipeline": {
+												"referenceName": "PIPELINE_LOAD_SNOWFLAKE_STAGE_COMPLEX_QUERY_WRAPPER_UIF",
+												"type": "PipelineReference"
+											},
+											"waitOnCompletion": true,
+											"parameters": {
+												"flow_key": {
+													"value": "@pipeline().parameters.flow_key",
+													"type": "Expression"
+												},
+												"run_key": {
+													"value": "@pipeline().parameters.run_key",
+													"type": "Expression"
+												},
+												"job_key": {
+													"value": "@item().job_key",
+													"type": "Expression"
+												},
+												"object_name": {
+													"value": "@item().target_table",
+													"type": "Expression"
+												},
+												"metadata_container": {
+													"value": "@pipeline().parameters.metadata_container",
+													"type": "Expression"
+												},
+												"config_folder": {
+													"value": "@pipeline().parameters.config_folder",
+													"type": "Expression"
+												},
+												"stage_schema": {
+													"value": "@split(item().target_table, '.')[0]",
+													"type": "Expression"
+												},
+												"stage_table": {
+													"value": "@split(item().target_table, '.')[1]",
+													"type": "Expression"
+												},
+												"load_type": {
+													"value": "@item().load_type",
+													"type": "Expression"
+												},
+												"config_file": {
+													"value": "@pipeline().parameters.config_file",
+													"type": "Expression"
+												}
+											}
+										}
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "LOAD_USING_SIMPLE_QUERY",
+										"type": "ExecutePipeline",
+										"dependsOn": [],
+										"userProperties": [],
+										"typeProperties": {
+											"pipeline": {
+												"referenceName": "PIPELINE_LOAD_SNOWFLAKE_STAGE_SIMPLE_QUERY_WRAPPER_UIF",
+												"type": "PipelineReference"
+											},
+											"waitOnCompletion": true,
+											"parameters": {
+												"flow_key": {
+													"value": "@pipeline().parameters.flow_key",
+													"type": "Expression"
+												},
+												"run_key": {
+													"value": "@pipeline().parameters.run_key",
+													"type": "Expression"
+												},
+												"job_key": {
+													"value": "@item().job_key",
+													"type": "Expression"
+												},
+												"object_name": {
+													"value": "@item().target_table",
+													"type": "Expression"
+												},
+												"metadata_container": {
+													"value": "@pipeline().parameters.metadata_container",
+													"type": "Expression"
+												},
+												"config_folder": {
+													"value": "@pipeline().parameters.config_folder",
+													"type": "Expression"
+												},
+												"stage_schema": {
+													"value": "@split(item().target_table, '.')[0]",
+													"type": "Expression"
+												},
+												"stage_table": {
+													"value": "@split(item().target_table, '.')[1]",
+													"type": "Expression"
+												},
+												"load_type": {
+													"value": "@item().load_type",
+													"type": "Expression"
+												},
+												"config_file": {
+													"value": "@pipeline().parameters.config_file",
+													"type": "Expression"
+												}
+											}
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "CHECK_EXECUTE_FLAG",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LOOKUP_CONFIG_FILE').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(equals(item().execute_flag,'1'), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"flow_key": {
+				"type": "string"
+			},
+			"run_key": {
+				"type": "string"
+			},
+			"metadata_container": {
+				"type": "string"
+			},
+			"config_folder": {
+				"type": "string"
+			},
+			"config_file": {
+				"type": "string"
+			},
+			"Jobs": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "UIF/MAIN_PIPELINE_JOBS/STAGE_LOAD/SAP HANA/SNOWFLAKE/WRAPPER"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-03-29T04:56:30Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

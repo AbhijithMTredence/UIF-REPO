@@ -1,0 +1,346 @@
+{
+	"name": "LOG_INGESTION_SNOWFLAKE_CHILD_UIF",
+	"properties": {
+		"description": "To load DQ logs",
+		"activities": [
+			{
+				"name": "ForEach Log File",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.filelist",
+						"type": "Expression"
+					},
+					"batchCount": 2,
+					"activities": [
+						{
+							"name": "LOG FILE TYPE",
+							"type": "Switch",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@substring(item().name,0 ,2 )",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "OP",
+										"activities": [
+											{
+												"name": "COPY AUDIT LOGS INTO SNOWFLAKE",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "JsonSource",
+														"storeSettings": {
+															"type": "AzureBlobStorageReadSettings",
+															"recursive": true,
+															"enablePartitionDiscovery": false
+														},
+														"formatSettings": {
+															"type": "JsonReadSettings"
+														}
+													},
+													"sink": {
+														"type": "SnowflakeSink",
+														"importSettings": {
+															"type": "SnowflakeImportCopyCommand"
+														}
+													},
+													"enableStaging": false,
+													"translator": {
+														"type": "TabularTranslator",
+														"mapComplexValuesToString": false
+													}
+												},
+												"inputs": [
+													{
+														"referenceName": "DATASET_BLOB_JSON_FILE_UIF",
+														"type": "DatasetReference",
+														"parameters": {
+															"container_name": {
+																"value": "@pipeline().parameters.adls_container",
+																"type": "Expression"
+															},
+															"folder_name": {
+																"value": "@pipeline().parameters.filepath",
+																"type": "Expression"
+															},
+															"file_name": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "DATASET_SNOWFLAKE_TABLE_COMMON_UIF",
+														"type": "DatasetReference",
+														"parameters": {
+															"schema_name": "STAGING_RGMOPS",
+															"table_name": "TBL_OP_LOG"
+														}
+													}
+												]
+											}
+										]
+									},
+									{
+										"value": "DQ",
+										"activities": [
+											{
+												"name": "Copy DQ Logs into SF",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "7.00:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "DelimitedTextSource",
+														"storeSettings": {
+															"type": "AzureBlobFSReadSettings",
+															"recursive": true,
+															"enablePartitionDiscovery": false
+														},
+														"formatSettings": {
+															"type": "DelimitedTextReadSettings"
+														}
+													},
+													"sink": {
+														"type": "SnowflakeSink",
+														"importSettings": {
+															"type": "SnowflakeImportCopyCommand"
+														}
+													},
+													"enableStaging": true,
+													"stagingSettings": {
+														"linkedServiceName": {
+															"referenceName": "LS_BLOB_STORAGE_UIF",
+															"type": "LinkedServiceReference"
+														},
+														"path": "sf-staging/UIF"
+													},
+													"translator": {
+														"type": "TabularTranslator",
+														"mappings": [
+															{
+																"source": {
+																	"name": "RunId",
+																	"type": "String"
+																},
+																"sink": {
+																	"name": "RUN_ID",
+																	"type": "String"
+																}
+															},
+															{
+																"source": {
+																	"name": "Record_Key",
+																	"type": "String"
+																},
+																"sink": {
+																	"name": "RECORD_KEY",
+																	"type": "String"
+																}
+															},
+															{
+																"source": {
+																	"name": "Record_Field_Name",
+																	"type": "String"
+																},
+																"sink": {
+																	"name": "RECORD_FIELD_NAME",
+																	"type": "String"
+																}
+															},
+															{
+																"source": {
+																	"name": "File_Name",
+																	"type": "String"
+																},
+																"sink": {
+																	"name": "FILE_NAME",
+																	"type": "String"
+																}
+															},
+															{
+																"source": {
+																	"name": "Rule_ID",
+																	"type": "String"
+																},
+																"sink": {
+																	"name": "RULE_ID",
+																	"type": "String"
+																}
+															},
+															{
+																"source": {
+																	"name": "Rule_Status",
+																	"type": "String"
+																},
+																"sink": {
+																	"name": "RULE_STATUS",
+																	"type": "String"
+																}
+															},
+															{
+																"source": {
+																	"name": "Records_Success",
+																	"type": "String"
+																},
+																"sink": {
+																	"name": "RECORDS_SUCCESS",
+																	"type": "Int64"
+																}
+															},
+															{
+																"source": {
+																	"name": "Records_Failed",
+																	"type": "String"
+																},
+																"sink": {
+																	"name": "RECORDS_FAILED",
+																	"type": "Int64"
+																}
+															},
+															{
+																"source": {
+																	"name": "Domain_Name",
+																	"type": "String"
+																},
+																"sink": {
+																	"name": "DOMAIN_NAME",
+																	"type": "String"
+																}
+															},
+															{
+																"source": {
+																	"name": "Source_System",
+																	"type": "String"
+																},
+																"sink": {
+																	"name": "SOURCE_SYSTEM",
+																	"type": "String"
+																}
+															},
+															{
+																"source": {
+																	"name": "Zone_Name",
+																	"type": "String"
+																},
+																"sink": {
+																	"name": "ZONE_NAME",
+																	"type": "String"
+																}
+															},
+															{
+																"source": {
+																	"name": "Batch_ID",
+																	"type": "String"
+																},
+																"sink": {
+																	"name": "BATCH_ID",
+																	"type": "String"
+																}
+															},
+															{
+																"source": {
+																	"name": "Start_Datetime",
+																	"type": "String"
+																},
+																"sink": {
+																	"name": "START_DATETIME",
+																	"type": "DateTime"
+																}
+															},
+															{
+																"source": {
+																	"name": "End_Datetime",
+																	"type": "String"
+																},
+																"sink": {
+																	"name": "END_DATETIME",
+																	"type": "DateTime"
+																}
+															}
+														]
+													}
+												},
+												"inputs": [
+													{
+														"referenceName": "DATASET_ADLS_CSV_FILE_UIF",
+														"type": "DatasetReference",
+														"parameters": {
+															"container_name": {
+																"value": "@pipeline().parameters.adls_container",
+																"type": "Expression"
+															},
+															"folder_name": {
+																"value": "@pipeline().parameters.filepath",
+																"type": "Expression"
+															},
+															"file_name": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "DATASET_SNOWFLAKE_TABLE_COMMON_UIF",
+														"type": "DatasetReference",
+														"parameters": {
+															"schema_name": "STAGING_RGMOPS",
+															"table_name": "TBL_DQ_LOG"
+														}
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"filelist": {
+				"type": "array"
+			},
+			"filepath": {
+				"type": "string"
+			},
+			"adls_container": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "UIF/MAIN_PIPELINE_JOBS/FLOW"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-08-04T05:47:11Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

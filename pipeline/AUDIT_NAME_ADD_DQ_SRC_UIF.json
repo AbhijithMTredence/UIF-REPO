@@ -1,0 +1,577 @@
+{
+	"name": "AUDIT_NAME_ADD_DQ_SRC_UIF",
+	"properties": {
+		"activities": [
+			{
+				"name": "FOR_EACH_FILE",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "CALL_PROC",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@if(equals(pipeline().parameters.isDQNotebook, '1'), activity('FILTER_CHILD_ITEMS_DQ_SRC').output.value, activity('FILTER_CHILD_ITEMS_FILE').output.value)",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "GET_ROW_COUNT",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "COPY_FILE_ADLS_SNOWFLAKE",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "JOB_FAILURE",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SnowflakeSource",
+									"query": {
+										"value": "SELECT COUNT(*) AS RECORDS FROM @{pipeline().parameters.target_table_schema}.@{pipeline().parameters.target_table}",
+										"type": "Expression"
+									},
+									"exportSettings": {
+										"type": "SnowflakeExportCopyCommand"
+									}
+								},
+								"dataset": {
+									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema_name": {
+											"value": "@pipeline().parameters.target_table_schema",
+											"type": "Expression"
+										},
+										"table_name": {
+											"value": "@pipeline().parameters.target_table",
+											"type": "Expression"
+										}
+									}
+								},
+								"firstRowOnly": false
+							}
+						},
+						{
+							"name": "Call Activity Log",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "GET_ROW_COUNT",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@equals(activity('GET_ROW_COUNT').output.value[0].RECORDS,0)",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "ACTIVITY_LOG_PROC",
+										"type": "Lookup",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "7.00:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "SnowflakeSource",
+												"query": {
+													"value": "CALL STAGING_GBL.SP_ACTIVITY_LOG(20,'@{pipeline().parameters.name}','@{pipeline().parameters.name} has @{activity('GET_ROW_COUNT').output.value[0].RECORDS} records','@{pipeline().parameters.run_key}','@{pipeline().parameters.job_key}','@{pipeline().parameters.flow_key}')",
+													"type": "Expression"
+												},
+												"exportSettings": {
+													"type": "SnowflakeExportCopyCommand"
+												}
+											},
+											"dataset": {
+												"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+												"type": "DatasetReference",
+												"parameters": {
+													"schema_name": "STAGING_GBL",
+													"table_name": "SP_ACTIVITY_LOG"
+												}
+											},
+											"firstRowOnly": false
+										}
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "ACTIVITY_LOG_PROC_0",
+										"type": "Lookup",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "7.00:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "SnowflakeSource",
+												"query": {
+													"value": "CALL STAGING_GBL.SP_ACTIVITY_LOG(22,'@{pipeline().parameters.name}','@{pipeline().parameters.name} has @{activity('GET_ROW_COUNT').output.value[0].RECORDS} records','@{pipeline().parameters.run_key}','@{pipeline().parameters.job_key}','@{pipeline().parameters.flow_key}')",
+													"type": "Expression"
+												},
+												"exportSettings": {
+													"type": "SnowflakeExportCopyCommand"
+												}
+											},
+											"dataset": {
+												"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+												"type": "DatasetReference",
+												"parameters": {
+													"schema_name": "STAGING_GBL",
+													"table_name": "SP_ACTIVITY_LOG"
+												}
+											},
+											"firstRowOnly": false
+										}
+									}
+								]
+							}
+						},
+						{
+							"name": "COPY_FILE_ADLS_SNOWFLAKE",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"additionalColumns": [
+										{
+											"name": "AUDIT_SOURCEFILENAME",
+											"value": "$$FILEPATH"
+										}
+									],
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "SnowflakeSink",
+									"importSettings": {
+										"type": "SnowflakeImportCopyCommand"
+									}
+								},
+								"enableStaging": true,
+								"stagingSettings": {
+									"linkedServiceName": {
+										"referenceName": "LS_BLOB_STORAGE_UIF",
+										"type": "LinkedServiceReference"
+									},
+									"path": "sf-staging/UIF"
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DATASET_ADLS_CSV_FILE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@concat(replace(pipeline().parameters.adls_folder, 'Raw', 'Refine'), formatDateTime(utcNow(), 'yyyy/MM/dd'))",
+											"type": "Expression"
+										},
+										"file_name": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema_name": {
+											"value": "@pipeline().parameters.target_table_schema",
+											"type": "Expression"
+										},
+										"table_name": {
+											"value": "@pipeline().parameters.target_table",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "JOB_FAILURE",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "COPY_FILE_ADLS_SNOWFLAKE",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SnowflakeSource",
+									"query": {
+										"value": "CALL STAGING_GBL.SP_ERROR_LOG_ETL('@{item().name}', @{pipeline().parameters.flow_key}, @{pipeline().parameters.job_key}, @{pipeline().parameters.run_key}, @{pipeline().parameters.job_start}, 'CSV file movement for - @{item().name} - load failed', '');",
+										"type": "Expression"
+									},
+									"exportSettings": {
+										"type": "SnowflakeExportCopyCommand"
+									}
+								},
+								"dataset": {
+									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
+									"type": "DatasetReference"
+								},
+								"firstRowOnly": true
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "CALL_PROC",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Filter DQ_SRC file",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SnowflakeSource",
+						"query": {
+							"value": "CALL STAGING_GBL.sp_generate_tbl_def_with_db(@{concat('''',pipeline().parameters.target_table_db,'''')},@{concat('''',pipeline().parameters.target_table_schema,'''')},@{concat('''',pipeline().parameters.target_table,'''')},@{concat('''',pipeline().parameters.target_table_load,'''')},@{concat('''',pipeline().parameters.target_table_def,'''')},@{pipeline().parameters.flow_key}, @{pipeline().parameters.run_key}, @{pipeline().parameters.job_key})",
+							"type": "Expression"
+						},
+						"exportSettings": {
+							"type": "SnowflakeExportCopyCommand"
+						}
+					},
+					"dataset": {
+						"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema_name": {
+								"value": "@pipeline().parameters.target_table_schema",
+								"type": "Expression"
+							},
+							"table_name": {
+								"value": "@pipeline().parameters.target_table",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "Filter DQ_SRC file",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.isDQNotebook, '1')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "FILTER_CHILD_ITEMS_FILE",
+							"type": "Filter",
+							"dependsOn": [
+								{
+									"activity": "GET_CHILD_ITEMS_FILE",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"items": {
+									"value": "@activity('GET_CHILD_ITEMS_FILE').output.childItems",
+									"type": "Expression"
+								},
+								"condition": {
+									"value": "@startswith(item().name, split(pipeline().parameters.name, '.')[0])",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "GET_CHILD_ITEMS_FILE",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@concat(replace(pipeline().parameters.adls_folder, 'Raw', 'Refine'), formatDateTime(utcNow(), 'yyyy/MM/dd'))",
+											"type": "Expression"
+										}
+									}
+								},
+								"fieldList": [
+									"childItems"
+								],
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "FILTER_CHILD_ITEMS_DQ_SRC",
+							"type": "Filter",
+							"dependsOn": [
+								{
+									"activity": "GET_CHILD_ITEMS_DQ_SRC",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"items": {
+									"value": "@activity('GET_CHILD_ITEMS_DQ_SRC').output.childItems",
+									"type": "Expression"
+								},
+								"condition": {
+									"value": "@startswith(item().name, 'DQ_SRC_')",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "GET_CHILD_ITEMS_DQ_SRC",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@concat(replace(pipeline().parameters.adls_folder, 'Raw', 'Refine'), formatDateTime(utcNow(), 'yyyy/MM/dd'))",
+											"type": "Expression"
+										}
+									}
+								},
+								"fieldList": [
+									"childItems"
+								],
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Delete Files",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "FOR_EACH_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FILE_CLEANUP_PIPELINE_UIF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": false,
+					"parameters": {
+						"name": {
+							"value": "@pipeline().parameters.name",
+							"type": "Expression"
+						},
+						"adls_container": {
+							"value": "@pipeline().parameters.adls_container",
+							"type": "Expression"
+						},
+						"adls_folder": {
+							"value": "@pipeline().parameters.adls_folder",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"name": {
+				"type": "string"
+			},
+			"source_folder_path": {
+				"type": "string"
+			},
+			"adls_container": {
+				"type": "string"
+			},
+			"adls_folder": {
+				"type": "string"
+			},
+			"adls_arc_container": {
+				"type": "string"
+			},
+			"adls_arc_folder": {
+				"type": "string"
+			},
+			"target_table_schema": {
+				"type": "string"
+			},
+			"target_table": {
+				"type": "string"
+			},
+			"target_table_load": {
+				"type": "string"
+			},
+			"target_table_def": {
+				"type": "string"
+			},
+			"flow_key": {
+				"type": "string"
+			},
+			"run_key": {
+				"type": "string"
+			},
+			"job_key": {
+				"type": "string"
+			},
+			"skip_line": {
+				"type": "string"
+			},
+			"cdc_flag": {
+				"type": "string"
+			},
+			"cdc_columns": {
+				"type": "string"
+			},
+			"isDQNotebook": {
+				"type": "string"
+			},
+			"target_table_db": {
+				"type": "string"
+			},
+			"job_start": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "UIF/MAIN_PIPELINE_JOBS/FLOW"
+		},
+		"annotations": []
+	}
+}

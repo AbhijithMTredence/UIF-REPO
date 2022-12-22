@@ -1,0 +1,223 @@
+{
+	"name": "1_TEST_GET_FILES_N_SEGREGATE",
+	"properties": {
+		"activities": [
+			{
+				"name": "GET_FILES",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": "email/attachment",
+							"folder_name": "stage"
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "SEGREGATE",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "GET_FILES",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('GET_FILES').output.childItems",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "SEGREGATE_BY_COUNTRY",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FILE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": "email/attachment",
+										"folder_name": "stage",
+										"file_name": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FILE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": "email/attachment/segregate",
+										"folder_name": {
+											"value": "@split(item().name,'_')[0]",
+											"type": "Expression"
+										},
+										"file_name": {
+											"value": "@split(item().name,'_')[1]",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "ARCHIVE_BY_COUNTRY",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "SEGREGATE_BY_COUNTRY",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"deleteFilesAfterCompletion": false
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FILE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": "email/attachment/segregate",
+										"folder_name": {
+											"value": "@split(item().name,'_')[0]",
+											"type": "Expression"
+										},
+										"file_name": {
+											"value": "@split(item().name,'_')[1]",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FILE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": "email/attachment/",
+										"folder_name": {
+											"value": "archive/@{concat(concat(split(item().name,'_')[0],'/'),formatDateTime(utcnow(), 'yyyy-MM-ddTHH:MM'))}",
+											"type": "Expression"
+										},
+										"file_name": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "CALL_READ_FOLDER",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "SEGREGATE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "2_TEST_READ_COUNTRY_FOLDER",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "UIF/0_ARCHIVE/EMAIL_ATTACHMENT_FLOW"
+		},
+		"annotations": []
+	}
+}
