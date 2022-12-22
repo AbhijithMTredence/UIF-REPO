@@ -5,14 +5,7 @@
 			{
 				"name": "LOOKUP_CONFIG_FILE",
 				"type": "Lookup",
-				"dependsOn": [
-					{
-						"activity": "FILE MOVEMENT",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"dependsOn": [],
 				"policy": {
 					"timeout": "7.00:00:00",
 					"retry": 0,
@@ -38,11 +31,11 @@
 						"type": "DatasetReference",
 						"parameters": {
 							"container_name": {
-								"value": "drivers/@{toLower(pipeline().globalParameters.env)}",
+								"value": "driver",
 								"type": "Expression"
 							},
 							"folder_name": {
-								"value": "config/file_movement",
+								"value": "file_movement",
 								"type": "Expression"
 							},
 							"file_name": {
@@ -860,11 +853,11 @@
 				}
 			},
 			{
-				"name": "FILE MOVEMENT",
-				"type": "Copy",
+				"name": "LOOKUP_ZIP_CONFIG_FILE",
+				"type": "Lookup",
 				"dependsOn": [],
 				"policy": {
-					"timeout": "7.00:00:00",
+					"timeout": "0.12:00:00",
 					"retry": 0,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
@@ -873,59 +866,208 @@
 				"userProperties": [],
 				"typeProperties": {
 					"source": {
-						"type": "BinarySource",
+						"type": "JsonSource",
 						"storeSettings": {
-							"type": "FileServerReadSettings",
-							"recursive": true
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
 						},
 						"formatSettings": {
-							"type": "BinaryReadSettings"
+							"type": "JsonReadSettings"
 						}
 					},
-					"sink": {
-						"type": "BinarySink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings"
-						}
-					},
-					"enableStaging": false
-				},
-				"inputs": [
-					{
-						"referenceName": "DATASET_FILE_SYSTEM_BINARY_FILE_UIF",
+					"dataset": {
+						"referenceName": "DATASET_ADLS_JSON_FILE_UIF",
 						"type": "DatasetReference",
 						"parameters": {
-							"folder_name": {
-								"value": "@replace('Corporate//RGM//UIL//RGM_GBL//DRIVERS//env//CONFIG//FILE_MOVEMENT','env',pipeline().globalParameters.env)",
-								"type": "Expression"
-							},
-							"file_name": {
-								"value": "config_execution_file_load.json",
-								"type": "Expression"
-							}
+							"container_name": "driver",
+							"folder_name": "file_movement",
+							"file_name": "config_execution_zip_load.json"
 						}
+					}
+				}
+			},
+			{
+				"name": "LOOKUP_TABLE_CONFIG_FILE",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "DATASET_ADLS_JSON_FILE_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": "driver",
+							"folder_name": "elt_process",
+							"file_name": "config_execution_elt_rdbms.json"
+						}
+					}
+				}
+			},
+			{
+				"name": "FILTER_ZIP",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_ZIP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
 					}
 				],
-				"outputs": [
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LOOKUP_ZIP_CONFIG_FILE').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(and(equals(split(item().type,',')[1],'ZIP'),equals(item().execute_flag,'1')), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
 					{
-						"referenceName": "DATASET_ADLS_BINARY_FILE_UIF",
-						"type": "DatasetReference",
-						"parameters": {
-							"container_name": {
-								"value": "drivers/@{toLower(pipeline().globalParameters.env)}",
-								"type": "Expression"
-							},
-							"folder_name": {
-								"value": "config/file_movement",
-								"type": "Expression"
-							},
-							"file_name": {
-								"value": "config_execution_file_load.json",
-								"type": "Expression"
+						"activity": "FILTER_ZIP",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"activities": [
+						{
+							"name": "Execute Pipeline1",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
 							}
 						}
+					]
+				}
+			},
+			{
+				"name": "FILTER_SQL",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_TABLE_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
 					}
-				]
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LOOKUP_TABLE_CONFIG_FILE').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(and(equals(split(item().type,',')[1],'SQL'),equals(item().execute_flag,'1')), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "FILTER_HANA",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_TABLE_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LOOKUP_TABLE_CONFIG_FILE').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(and(equals(split(item().type,',')[1],'HANA'),equals(item().execute_flag,'1')), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEach2",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_SQL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"activities": [
+						{
+							"name": "Execute Pipeline2",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "ForEach3",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_HANA",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"activities": [
+						{
+							"name": "Execute Pipeline3",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
 			}
 		],
 		"parameters": {
