@@ -946,7 +946,7 @@
 				}
 			},
 			{
-				"name": "ForEach1",
+				"name": "FOREACH_ZIP",
 				"type": "ForEach",
 				"dependsOn": [
 					{
@@ -958,13 +958,21 @@
 				],
 				"userProperties": [],
 				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_ZIP').output.value",
+						"type": "Expression"
+					},
 					"activities": [
 						{
-							"name": "Execute Pipeline1",
+							"name": "ZIP_FILE_LOAD_PROCESS",
 							"type": "ExecutePipeline",
 							"dependsOn": [],
 							"userProperties": [],
 							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PIPELINE_ZIP_FILE_EXIST_CHECK_UIF",
+									"type": "PipelineReference"
+								},
 								"waitOnCompletion": true
 							}
 						}
@@ -1018,7 +1026,7 @@
 				}
 			},
 			{
-				"name": "ForEach2",
+				"name": "FOREACH_SQL",
 				"type": "ForEach",
 				"dependsOn": [
 					{
@@ -1030,9 +1038,13 @@
 				],
 				"userProperties": [],
 				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_SQL').output",
+						"type": "Expression"
+					},
 					"activities": [
 						{
-							"name": "Execute Pipeline2",
+							"name": "SQL_FILE_LOAD_PROCESS",
 							"type": "ExecutePipeline",
 							"dependsOn": [],
 							"userProperties": [],
@@ -1044,7 +1056,7 @@
 				}
 			},
 			{
-				"name": "ForEach3",
+				"name": "FOREACH_HANA",
 				"type": "ForEach",
 				"dependsOn": [
 					{
@@ -1056,9 +1068,13 @@
 				],
 				"userProperties": [],
 				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_HANA').output",
+						"type": "Expression"
+					},
 					"activities": [
 						{
-							"name": "Execute Pipeline3",
+							"name": "HANA_FILE_LOAD_PROCESS",
 							"type": "ExecutePipeline",
 							"dependsOn": [],
 							"userProperties": [],
