@@ -1,0 +1,78 @@
+{
+	"name": "PIPELINE_ZIP_POST_LOAD_UIF",
+	"properties": {
+		"activities": [
+			{
+				"name": "CHECK_POST_CONDITION",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.post_sp_load,'')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "CALL_POST_SP_LOAD",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SnowflakeSource",
+									"query": {
+										"value": "CALL @{pipeline().parameters.post_sp_load}(@{pipeline().parameters.flow_key}, @{pipeline().parameters.run_key}, @{pipeline().parameters.job_key})",
+										"type": "Expression"
+									},
+									"exportSettings": {
+										"type": "SnowflakeExportCopyCommand"
+									}
+								},
+								"dataset": {
+									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema_name": {
+											"value": "@split(pipeline().parameters.post_sp_load,'.')[0]",
+											"type": "Expression"
+										},
+										"table_name": {
+											"value": "@split(pipeline().parameters.post_sp_load,'.')[1]",
+											"type": "Expression"
+										}
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"flow_key": {
+				"type": "string"
+			},
+			"run_key": {
+				"type": "string"
+			},
+			"job_key": {
+				"type": "string"
+			},
+			"post_sp_load": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "UIF/ZIP_LOAD_FLOW"
+		},
+		"annotations": []
+	}
+}

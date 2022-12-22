@@ -1,0 +1,131 @@
+{
+	"name": "PIPELINE_MASTER_GLOBAL_UIF",
+	"properties": {
+		"activities": [
+			{
+				"name": "CALL MASTER GLOBAL",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CALL_ZIP_LOAD",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "CALL_FILE_LOAD",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PIPELINE_MASTER_GLOBAL_OBJECTS_INGESTION_UIF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"flow_key": {
+							"value": "@pipeline().parameters.flow_key",
+							"type": "Expression"
+						},
+						"load_type": {
+							"value": "@pipeline().parameters.load_type",
+							"type": "Expression"
+						},
+						"run_key": {
+							"value": "@pipeline().parameters.run_key",
+							"type": "Expression"
+						},
+						"Jobs": {
+							"value": "@pipeline().parameters.Jobs",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "CALL_ZIP_LOAD",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PIPELINE_ZIP_LOAD_LAUNCHER_UIF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"flow_key": {
+							"value": "@pipeline().parameters.flow_key",
+							"type": "Expression"
+						},
+						"run_key": {
+							"value": "@pipeline().parameters.run_key",
+							"type": "Expression"
+						},
+						"object_name": "ZIP_LOAD",
+						"Jobs": {
+							"value": "@pipeline().parameters.Jobs",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "CALL_FILE_LOAD",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PIPELINE_FILE_LOAD_MAIN_LAUNCHER_UIF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"flow_key": {
+							"value": "@pipeline().parameters.flow_key",
+							"type": "Expression"
+						},
+						"run_key": {
+							"value": "@pipeline().parameters.run_key",
+							"type": "Expression"
+						},
+						"object_name": "FILE_LOAD_MOVEMENT",
+						"Jobs": {
+							"value": "@pipeline().parameters.Jobs",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"flow_key": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"run_key": {
+				"type": "string"
+			},
+			"load_type": {
+				"type": "string"
+			},
+			"Jobs": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"RESULT": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "UIF/MAIN_PIPELINE_JOBS"
+		},
+		"annotations": []
+	}
+}

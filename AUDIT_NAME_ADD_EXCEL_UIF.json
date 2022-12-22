@@ -1,0 +1,617 @@
+{
+	"name": "AUDIT_NAME_ADD_EXCEL_UIF",
+	"properties": {
+		"activities": [
+			{
+				"name": "GET_CHILD_ITEMS",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": {
+								"value": "@pipeline().parameters.adls_container",
+								"type": "Expression"
+							},
+							"folder_name": {
+								"value": "@concat(replace(pipeline().parameters.adls_folder, 'Raw', 'Refine'), formatDateTime(utcNow(), 'yyyy/MM/dd'))",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "FOR_EACH_FILE",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "CALL_PROC",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_CHILD_ITEMS').output.Value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Call Activity Log",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "GET_ROW_COUNT",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@equals(activity('GET_ROW_COUNT').output.value[0].RECORDS,0)",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "ACTIVITY_LOG_PROC",
+										"type": "Lookup",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "7.00:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "SnowflakeSource",
+												"query": {
+													"value": "CALL STAGING_GBL.SP_ACTIVITY_LOG(20,'@{pipeline().parameters.name}','@{pipeline().parameters.name} has @{activity('GET_ROW_COUNT').output.value[0].RECORDS} records','@{pipeline().parameters.run_key}','@{pipeline().parameters.job_key}','@{pipeline().parameters.flow_key}')",
+													"type": "Expression"
+												},
+												"exportSettings": {
+													"type": "SnowflakeExportCopyCommand"
+												}
+											},
+											"dataset": {
+												"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+												"type": "DatasetReference",
+												"parameters": {
+													"schema_name": "STAGING_GBL",
+													"table_name": "SP_ACTIVITY_LOG"
+												}
+											},
+											"firstRowOnly": false
+										}
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "ACTIVITY_LOG_PROC_0",
+										"type": "Lookup",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "7.00:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "SnowflakeSource",
+												"query": {
+													"value": "CALL STAGING_GBL.SP_ACTIVITY_LOG(22,'@{pipeline().parameters.name}','@{pipeline().parameters.name} has @{activity('GET_ROW_COUNT').output.value[0].RECORDS} records','@{pipeline().parameters.run_key}','@{pipeline().parameters.job_key}','@{pipeline().parameters.flow_key}')",
+													"type": "Expression"
+												},
+												"exportSettings": {
+													"type": "SnowflakeExportCopyCommand"
+												}
+											},
+											"dataset": {
+												"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+												"type": "DatasetReference",
+												"parameters": {
+													"schema_name": "STAGING_GBL",
+													"table_name": "SP_ACTIVITY_LOG"
+												}
+											},
+											"firstRowOnly": false
+										}
+									}
+								]
+							}
+						},
+						{
+							"name": "GET_ROW_COUNT",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "JOB_FAILURE",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "IF FINAL FILE IS CSV",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SnowflakeSource",
+									"query": {
+										"value": "SELECT COUNT(*) AS RECORDS FROM @{pipeline().parameters.target_table_schema}.@{pipeline().parameters.target_table}",
+										"type": "Expression"
+									},
+									"exportSettings": {
+										"type": "SnowflakeExportCopyCommand"
+									}
+								},
+								"dataset": {
+									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema_name": {
+											"value": "@pipeline().parameters.target_table_schema",
+											"type": "Expression"
+										},
+										"table_name": {
+											"value": "@pipeline().parameters.target_table",
+											"type": "Expression"
+										}
+									}
+								},
+								"firstRowOnly": false
+							}
+						},
+						{
+							"name": "IF FINAL FILE IS CSV",
+							"type": "IfCondition",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@equals(split(item().name,'.')[1],'csv')",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "COPY_FS_ADLS_EXCEL_SNOWFLAKE",
+										"type": "Copy",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "7.00:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "ExcelSource",
+												"additionalColumns": [
+													{
+														"name": "AUDIT_SOURCEFILENAME",
+														"value": "$$FILEPATH"
+													}
+												],
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												}
+											},
+											"sink": {
+												"type": "SnowflakeSink",
+												"importSettings": {
+													"type": "SnowflakeImportCopyCommand"
+												}
+											},
+											"enableStaging": true,
+											"stagingSettings": {
+												"linkedServiceName": {
+													"referenceName": "BLOB_SAS",
+													"type": "LinkedServiceReference"
+												},
+												"path": "snowflake-staging"
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "DATASET_ADLS_EXCEL_FILE_UIF",
+												"type": "DatasetReference",
+												"parameters": {
+													"container_name": {
+														"value": "@pipeline().parameters.adls_container",
+														"type": "Expression"
+													},
+													"folder_name": {
+														"value": "@concat(replace(pipeline().parameters.adls_folder, 'Raw', 'Refine'), formatDateTime(utcNow(), 'yyyy/MM/dd'))",
+														"type": "Expression"
+													},
+													"file_name": {
+														"value": "@item().name",
+														"type": "Expression"
+													},
+													"sheet_name": {
+														"value": "@replace(split(pipeline().parameters.sheet, '!')[0], '''', '')",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+												"type": "DatasetReference",
+												"parameters": {
+													"schema_name": {
+														"value": "@pipeline().parameters.target_table_schema",
+														"type": "Expression"
+													},
+													"table_name": {
+														"value": "@pipeline().parameters.target_table",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "COPY_FS_ADLS_CONVERTED_CSV_SNOWFLAKE",
+										"type": "Copy",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "7.00:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "DelimitedTextSource",
+												"additionalColumns": [
+													{
+														"name": "AUDIT_SOURCEFILENAME",
+														"value": "$$FILEPATH"
+													}
+												],
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "DelimitedTextReadSettings"
+												}
+											},
+											"sink": {
+												"type": "SnowflakeSink",
+												"importSettings": {
+													"type": "SnowflakeImportCopyCommand"
+												}
+											},
+											"enableStaging": true,
+											"stagingSettings": {
+												"linkedServiceName": {
+													"referenceName": "BLOB_SAS",
+													"type": "LinkedServiceReference"
+												},
+												"path": "snowflake-staging"
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "DATASET_ADLS_CSV_FILE_UIF",
+												"type": "DatasetReference",
+												"parameters": {
+													"container_name": {
+														"value": "@pipeline().parameters.adls_container",
+														"type": "Expression"
+													},
+													"folder_name": {
+														"value": "@concat(replace(pipeline().parameters.adls_folder, 'Raw', 'Refine'), formatDateTime(utcNow(), 'yyyy/MM/dd'))",
+														"type": "Expression"
+													},
+													"file_name": {
+														"value": "@item().name",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+												"type": "DatasetReference",
+												"parameters": {
+													"schema_name": {
+														"value": "@pipeline().parameters.target_table_schema",
+														"type": "Expression"
+													},
+													"table_name": {
+														"value": "@pipeline().parameters.target_table",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								]
+							}
+						},
+						{
+							"name": "JOB_FAILURE",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "IF FINAL FILE IS CSV",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SnowflakeSource",
+									"query": {
+										"value": "CALL STAGING_GBL.SP_ERROR_LOG_ETL('@{item().name}', @{pipeline().parameters.flow_key}, @{pipeline().parameters.job_key}, @{pipeline().parameters.run_key}, @{pipeline().parameters.job_start}, 'Excel file movement for - @{item().name} - load failed', '');",
+										"type": "Expression"
+									},
+									"exportSettings": {
+										"type": "SnowflakeExportCopyCommand"
+									}
+								},
+								"dataset": {
+									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
+									"type": "DatasetReference"
+								},
+								"firstRowOnly": true
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "CALL_PROC",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "FILTER_CHILD_ITEMS",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SnowflakeSource",
+						"query": {
+							"value": "CALL STAGING_GBL.sp_generate_tbl_def_with_db(@{concat('''',pipeline().parameters.target_table_db,'''')},@{concat('''',pipeline().parameters.target_table_schema,'''')},@{concat('''',pipeline().parameters.target_table,'''')},@{concat('''',pipeline().parameters.target_table_load,'''')},@{concat('''',pipeline().parameters.target_table_def,'''')},@{pipeline().parameters.flow_key}, @{pipeline().parameters.run_key}, @{pipeline().parameters.job_key})",
+							"type": "Expression"
+						},
+						"exportSettings": {
+							"type": "SnowflakeExportCopyCommand"
+						}
+					},
+					"dataset": {
+						"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"schema_name": {
+								"value": "@pipeline().parameters.target_table_schema",
+								"type": "Expression"
+							},
+							"table_name": {
+								"value": "@pipeline().parameters.target_table",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "FILTER_CHILD_ITEMS",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "GET_CHILD_ITEMS",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('GET_CHILD_ITEMS').output.childItems",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@contains(item().name, split(pipeline().parameters.name, '.')[0])",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Delete Files",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "FOR_EACH_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FILE_CLEANUP_PIPELINE_UIF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": false,
+					"parameters": {
+						"name": {
+							"value": "@pipeline().parameters.name",
+							"type": "Expression"
+						},
+						"adls_container": {
+							"value": "@pipeline().parameters.adls_container",
+							"type": "Expression"
+						},
+						"adls_folder": {
+							"value": "@pipeline().parameters.adls_folder",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"name": {
+				"type": "string",
+				"defaultValue": "Query Limpia.xlsx"
+			},
+			"source_folder_path": {
+				"type": "string",
+				"defaultValue": "/dummy/"
+			},
+			"adls_container": {
+				"type": "string",
+				"defaultValue": "globaldatalake"
+			},
+			"adls_folder": {
+				"type": "string",
+				"defaultValue": "/ExternalSources/RegionalDL/POS/EMEA/Spain/PnL/Raw/Data/"
+			},
+			"adls_arc_container": {
+				"type": "string",
+				"defaultValue": "globaldatalake"
+			},
+			"adls_arc_folder": {
+				"type": "string",
+				"defaultValue": "/ExternalSources/RegionalDL/POS/EMEA/Spain/PnL/Raw/archive/"
+			},
+			"target_table_schema": {
+				"type": "string",
+				"defaultValue": "STAGING_EU_FIN"
+			},
+			"target_table": {
+				"type": "string",
+				"defaultValue": "RGM_EM_ES_PL_HANA"
+			},
+			"target_table_load": {
+				"type": "string",
+				"defaultValue": "DROP_CREATE"
+			},
+			"target_table_def": {
+				"type": "string",
+				"defaultValue": "SU NUMBER(38,4),PIECES_PC NUMBER(38,4),CASES NUMBER(38,4),GROSS_SALES_VALUE NUMBER(38,4),MARKET_DISCOUNT NUMBER(38,4),GSV NUMBER(38,4),MANUAL_PRICE_SALES NUMBER(38,4),RETURNS NUMBER(38,4),CUST_DISC_ON_IVOICE NUMBER(38,4),BASE_DISCOUNT NUMBER(38,4),LOGISTIC_DISCOUNT NUMBER(38,4),CUSTOMER_COLLECTION NUMBER(38,4),CASH_DISCOUNT_ACCR NUMBER(38,4),D_A_OFF NUMBER(38,4),D_A NUMBER(38,4),GSAD NUMBER(38,4),FREE_GOODS NUMBER(38,4),MANUAL_PRICE_PROM NUMBER(38,4),TRADE_PROM_ON_INV NUMBER(38,4),TRADE_PROMO_ON NUMBER(38,4),TRADE_PROMO_OFF_ACCR NUMBER(38,4),TRADE_PROM_OFF_INV_T_PROJ NUMBER(38,4),TRADE_PROMO_OFF NUMBER(38,4),TRADE_PROMOTION_RIR NUMBER(38,4),CONS_PROM_ON NUMBER(38,4),CONS_PROMO_OFF_F_PROJECTS NUMBER(38,4),REDEMPTION NUMBER(38,4),CONSUMER_PROMO_OFF NUMBER(38,4),CONSUMER_PROMO_RIR NUMBER(38,4),NSV NUMBER(38,4),COS_VARIABLE NUMBER(38,4),DIS_VARIABLE NUMBER(38,4),NET_CONTRIBUTION NUMBER(38,4),NET_CONTRIBUTION_MARGIN VARCHAR(20),FIXED_COSTS NUMBER(38,4),FIXED_DISTRIBUTION NUMBER(38,4),GROSS_PROFIT_BEF_VAR_UNUS NUMBER(38,4),GROSS_PROFIT_MARGIN_BEFVAR_UNUS VARCHAR(20),COS_VARIANCE NUMBER(38,4),COS_UNUSUAL NUMBER(38,4),COS_EURO NUMBER(38,4),GROSS_PROFIT NUMBER(38,4),GROSS_PROFIT_MARGIN VARCHAR(20),ADVERTISING NUMBER(38,4),CP NUMBER(38,4),GPAP NUMBER(38,4),GPAP_MARGIN VARCHAR(20),ISVHDR_DISCOUNT NUMBER(38,4),ISV NUMBER(38,4),HDR_DISCOUNT NUMBER(38,4),COS_EXC_VARIANCES NUMBER(38,4),DISTRIBUTION NUMBER(38,4),GSV_SU NUMBER(38,4),D_A_SU NUMBER(38,4),GSAD_SU NUMBER(38,4),TRADE_PROMO_ON_SU NUMBER(38,4),TRADE_PROMO_OFF_SU NUMBER(38,4),TRADE_PROMO_SU NUMBER(38,4),CONSUMER_PROMO_ON_SU NUMBER(38,4),CONSUMER_PROMO_OFF_SU NUMBER(38,4),CONSUMER_PROMO_SU NUMBER(38,4),NSV_SU NUMBER(38,4),COS_VAR_SU NUMBER(38,4),COS_FIX_SU NUMBER(38,4),COS_EX_VAR_SU NUMBER(38,4),DIS_VAR_SU NUMBER(38,4),DIS_FIX_SU NUMBER(38,4),DIS_SU NUMBER(38,4),GROSS_PROFIT_EX_VAR_SU NUMBER(38,4),GSV_CASE NUMBER(38,4),D_A_CASE NUMBER(38,4),GSAD_CASE NUMBER(38,4),TRADE_PROMO_ON_CASE NUMBER(38,4),TRADE_PROMO_OFF_CASE NUMBER(38,4),TRADE_PROMO_CASE NUMBER(38,4),CONSUMER_PROMO_ON_CASE NUMBER(38,4),CONSUMER_PROMO_OFF_CASE NUMBER(38,4),CONSUMER_PROMO_CASE NUMBER(38,4),NSV_CASE NUMBER(38,4),COS_VAR_CS NUMBER(38,4),COS_FIX_CS NUMBER(38,4),COS_EX_VAR_CASE NUMBER(38,4),DIS_VAR_CS NUMBER(38,4),DIS_FIX_CS NUMBER(38,4),DIS_CASE NUMBER(38,4),GROSS_PROFIT_EX_VAR_CASE NUMBER(38,4),GSV_PACK NUMBER(38,4),D_A_PACK NUMBER(38,4),GSAD_PACK NUMBER(38,4),TRADE_PROMO_ON_PACK NUMBER(38,4),TRADE_PROMO_OFF_PACK NUMBER(38,4),TRADE_PROMO_PACK NUMBER(38,4),CONSUMER_PROMO_ON_PACK NUMBER(38,4),CONSUMER_PROMO_OFF_PACK NUMBER(38,4),CONSUMER_PROMO_PACK NUMBER(38,4),NSV_PACK NUMBER(38,4),ISVHDR_DISCOUNT_PACK NUMBER(38,4),_PLANTILLA VARCHAR(20),CUSTOMER_SPECIFIC_PRICE_ZLP_PACK NUMBER(38,4),COS_EX_VAR_PACK NUMBER(38,4),COS_VAR_PC NUMBER(38,4),COS_FIX_PC NUMBER(38,4),DISTRIBUTION_PACK NUMBER(38,4),DIS_VAR_PC NUMBER(38,4),DIS_FIX_PC NUMBER(38,4),GROSS_PROFIT_EX_VAR_PACK NUMBER(38,4),FISCAL_PERIOD NUMBER(38,4),FISCAL_YEAR NUMBER(38,4),AUDIT_LASTMODIFIEDTIME TIMESTAMP_NTZ(9) DEFAULT CURRENT_TIMESTAMP(),AUDIT_SOURCEFILENAME VARCHAR(200),AUDIT_SOURCE VARCHAR(20) DEFAULT ''FLAT FILE'',AUDIT_REGION VARCHAR(10) DEFAULT ''EU'',AUDIT_MARKET VARCHAR(10) DEFAULT ''ES''"
+			},
+			"flow_key": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"run_key": {
+				"type": "string",
+				"defaultValue": "32004"
+			},
+			"job_key": {
+				"type": "string",
+				"defaultValue": "30002"
+			},
+			"skip_line": {
+				"type": "string",
+				"defaultValue": "0"
+			},
+			"cdc_flag": {
+				"type": "string",
+				"defaultValue": "0"
+			},
+			"cdc_columns": {
+				"type": "string"
+			},
+			"sheet": {
+				"type": "string",
+				"defaultValue": "'Pivot limpia'!A12"
+			},
+			"isDQNotebook": {
+				"type": "string",
+				"defaultValue": "0"
+			},
+			"target_table_db": {
+				"type": "string"
+			},
+			"job_start": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "UIF/MAIN_PIPELINE_JOBS/FLOW"
+		},
+		"annotations": []
+	}
+}

@@ -1,0 +1,258 @@
+{
+	"name": "PIPELINE_ZIP_LOAD_LAUNCHER_UIF",
+	"properties": {
+		"activities": [
+			{
+				"name": "READ_JSON",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "COPY_ZIP_CONFIG_FS",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "DATASET_ADLS_JSON_FILE_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": {
+								"value": "drivers/@{toLower(pipeline().globalParameters.env)}",
+								"type": "Expression"
+							},
+							"folder_name": "config/file_movement",
+							"file_name": "config_execution_zip_load.json"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "EXEC_FLAG",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "READ_JSON",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('READ_JSON').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(equals(item().execute_flag,'1'), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "EXEC_FLAG",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('EXEC_FLAG').output.Value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "FILE_EXIST",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PIPELINE_ZIP_FILE_EXIST_CHECK_UIF",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"fs_folder_path_zip": {
+										"value": "@item().fs_folder_path_zip",
+										"type": "Expression"
+									},
+									"fs_zip_file_name": {
+										"value": "@item().fs_zip_file_name",
+										"type": "Expression"
+									},
+									"adls_container_zip": {
+										"value": "@item().adls_container_zip",
+										"type": "Expression"
+									},
+									"adls_folder_zip": {
+										"value": "@item().adls_folder_zip",
+										"type": "Expression"
+									},
+									"adls_file_zip": {
+										"value": "@item().adls_file_zip",
+										"type": "Expression"
+									},
+									"adls_container_unzip": {
+										"value": "@item().adls_container_unzip",
+										"type": "Expression"
+									},
+									"adls_folder_unzip": {
+										"value": "@item().adls_folder_unzip",
+										"type": "Expression"
+									},
+									"internal_files": {
+										"value": "@item().internal_files",
+										"type": "Expression"
+									},
+									"flow_key": {
+										"value": "@pipeline().parameters.flow_key",
+										"type": "Expression"
+									},
+									"run_key": {
+										"value": "@pipeline().parameters.run_key",
+										"type": "Expression"
+									},
+									"job_key": {
+										"value": "@item().job_key",
+										"type": "Expression"
+									},
+									"object_name": {
+										"value": "@pipeline().parameters.object_name",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "COPY_ZIP_CONFIG_FS",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "FileServerReadSettings",
+							"recursive": true
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings"
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						}
+					},
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "LS_BLOB_STORAGE_UIF",
+							"type": "LinkedServiceReference"
+						},
+						"path": "sf-staging/UIF"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DATASET_FILE_SYSTEM_BINARY_FILE_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder_name": {
+								"value": "@replace('Corporate//RGM//UIL//RGM_GBL//DRIVERS//env//CONFIG//FILE_MOVEMENT','env',pipeline().globalParameters.env)",
+								"type": "Expression"
+							},
+							"file_name": "config_execution_zip_load.json"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DATASET_ADLS_BINARY_FILE_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": {
+								"value": "drivers/@{toLower(pipeline().globalParameters.env)}",
+								"type": "Expression"
+							},
+							"folder_name": "config/file_movement",
+							"file_name": "config_execution_zip_load.json"
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"flow_key": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"run_key": {
+				"type": "string"
+			},
+			"object_name": {
+				"type": "string",
+				"defaultValue": "ZIP_LOAD"
+			},
+			"Jobs": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"RESULT": {
+				"type": "String"
+			},
+			"error_check": {
+				"type": "String"
+			},
+			"FILE_NAME": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "UIF/LAUNCHER_JOBS"
+		},
+		"annotations": []
+	}
+}

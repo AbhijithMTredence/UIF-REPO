@@ -1,0 +1,456 @@
+{
+	"name": "CHECK_NOTEBOOK_FLAG_UIF",
+	"properties": {
+		"activities": [
+			{
+				"name": "CHECK_IS_NOTEBOOK",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.isNotebook, '1')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "NB_CONVERT_CSV",
+							"type": "DatabricksNotebook",
+							"dependsOn": [
+								{
+									"activity": "Lookup Parameter File",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"notebookPath": "/Users/abhijith.m@kcc.com/NB_CONVERT_CSV",
+								"baseParameters": {
+									"PipelineID": {
+										"value": "@pipeline().parameters.PipelineID",
+										"type": "Expression"
+									},
+									"RawDirectory": {
+										"value": "@concat(pipeline().parameters.adls_folder,formatDateTime(utcNow(),'yyyy/MM/dd'))",
+										"type": "Expression"
+									},
+									"RefineDirectory": {
+										"value": "@concat(replace(pipeline().parameters.adls_folder, 'Raw', 'Refine'),formatDateTime(utcNow(),'yyyy/MM/dd'))",
+										"type": "Expression"
+									},
+									"adlscontainer": {
+										"value": "@pipeline().parameters.adls_container",
+										"type": "Expression"
+									},
+									"accountname": {
+										"value": "@activity('Lookup Parameter File').output.firstRow.Storage_Account_Name",
+										"type": "Expression"
+									},
+									"sheetname": {
+										"value": "@pipeline().parameters.sheet",
+										"type": "Expression"
+									},
+									"file_type": {
+										"value": "@pipeline().parameters.file_type",
+										"type": "Expression"
+									},
+									"isNotebook": {
+										"value": "@pipeline().parameters.isNotebook",
+										"type": "Expression"
+									},
+									"isDQNotebook": {
+										"value": "@pipeline().parameters.isDQNotebook",
+										"type": "Expression"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "LS_RGM_ADB",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Lookup Parameter File",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"dataset": {
+									"referenceName": "DS_RGM_PARAM_FILE",
+									"type": "DatasetReference"
+								},
+								"firstRowOnly": true
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "EXECUTE_TRANSFORMATION_PIPELINE",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "TRANSFORMATION_PIPELINE_UIF",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"name": {
+										"value": "@pipeline().parameters.name",
+										"type": "Expression"
+									},
+									"source_folder_path": {
+										"value": "@pipeline().parameters.source_folder_path",
+										"type": "Expression"
+									},
+									"adls_container": {
+										"value": "@pipeline().parameters.adls_container",
+										"type": "Expression"
+									},
+									"adls_folder": {
+										"value": "@pipeline().parameters.adls_folder",
+										"type": "Expression"
+									},
+									"adls_arc_container": {
+										"value": "@pipeline().parameters.adls_arc_container",
+										"type": "Expression"
+									},
+									"adls_arc_folder": {
+										"value": "@pipeline().parameters.adls_arc_folder",
+										"type": "Expression"
+									},
+									"target_table_schema": {
+										"value": "@pipeline().parameters.target_table_schema",
+										"type": "Expression"
+									},
+									"target_table": {
+										"value": "@pipeline().parameters.target_table",
+										"type": "Expression"
+									},
+									"target_table_load": {
+										"value": "@pipeline().parameters.target_table_load",
+										"type": "Expression"
+									},
+									"target_table_def": {
+										"value": "@pipeline().parameters.target_table_def",
+										"type": "Expression"
+									},
+									"flow_key": {
+										"value": "@pipeline().parameters.flow_key",
+										"type": "Expression"
+									},
+									"run_key": {
+										"value": "@pipeline().parameters.run_key",
+										"type": "Expression"
+									},
+									"job_key": {
+										"value": "@pipeline().parameters.job_key",
+										"type": "Expression"
+									},
+									"skip_line": {
+										"value": "@pipeline().parameters.skip_line",
+										"type": "Expression"
+									},
+									"cdc_flag": {
+										"value": "@pipeline().parameters.cdc_flag",
+										"type": "Expression"
+									},
+									"cdc_columns": {
+										"value": "@pipeline().parameters.cdc_columns",
+										"type": "Expression"
+									},
+									"sheet": {
+										"value": "@pipeline().parameters.sheet",
+										"type": "Expression"
+									},
+									"isNotebook": {
+										"value": "@pipeline().parameters.isNotebook",
+										"type": "Expression"
+									},
+									"notebookPath": {
+										"value": "@pipeline().parameters.notebookPath",
+										"type": "Expression"
+									},
+									"isDQNotebook": {
+										"value": "@pipeline().parameters.isDQNotebook",
+										"type": "Expression"
+									},
+									"DQNotebookPath": {
+										"value": "@pipeline().parameters.DQNotebookPath",
+										"type": "Expression"
+									},
+									"PipelineID": {
+										"value": "@pipeline().parameters.PipelineID",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "CHECK_IS_DQ_NOTEBOOK",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "CHECK_IS_NOTEBOOK",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.isDQNotebook, '1')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "EXECUTE_DQ_PIPELINE",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "DQ_PIPELINE_UIF",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"name": {
+										"value": "@pipeline().parameters.name",
+										"type": "Expression"
+									},
+									"source_folder_path": {
+										"value": "@pipeline().parameters.source_folder_path",
+										"type": "Expression"
+									},
+									"adls_container": {
+										"value": "@pipeline().parameters.adls_container",
+										"type": "Expression"
+									},
+									"adls_folder": {
+										"value": "@pipeline().parameters.adls_folder",
+										"type": "Expression"
+									},
+									"adls_arc_container": {
+										"value": "@pipeline().parameters.adls_arc_container",
+										"type": "Expression"
+									},
+									"adls_arc_folder": {
+										"value": "@pipeline().parameters.adls_arc_folder",
+										"type": "Expression"
+									},
+									"target_table_schema": {
+										"value": "@pipeline().parameters.target_table_schema",
+										"type": "Expression"
+									},
+									"target_table": {
+										"value": "@pipeline().parameters.target_table",
+										"type": "Expression"
+									},
+									"target_table_load": {
+										"value": "@pipeline().parameters.target_table_load",
+										"type": "Expression"
+									},
+									"target_table_def": {
+										"value": "@pipeline().parameters.target_table_def",
+										"type": "Expression"
+									},
+									"flow_key": {
+										"value": "@pipeline().parameters.flow_key",
+										"type": "Expression"
+									},
+									"run_key": {
+										"value": "@pipeline().parameters.run_key",
+										"type": "Expression"
+									},
+									"job_key": {
+										"value": "@pipeline().parameters.job_key",
+										"type": "Expression"
+									},
+									"skip_line": {
+										"value": "@pipeline().parameters.skip_line",
+										"type": "Expression"
+									},
+									"cdc_flag": {
+										"value": "@pipeline().parameters.cdc_flag",
+										"type": "Expression"
+									},
+									"cdc_columns": {
+										"value": "@pipeline().parameters.cdc_columns",
+										"type": "Expression"
+									},
+									"sheet": {
+										"value": "@pipeline().parameters.sheet",
+										"type": "Expression"
+									},
+									"isNotebook": {
+										"value": "@pipeline().parameters.isNotebook",
+										"type": "Expression"
+									},
+									"notebookPath": {
+										"value": "@pipeline().parameters.notebookPath",
+										"type": "Expression"
+									},
+									"isDQNotebook": {
+										"value": "@pipeline().parameters.isDQNotebook",
+										"type": "Expression"
+									},
+									"DQNotebookPath": {
+										"value": "@pipeline().parameters.DQNotebookPath",
+										"type": "Expression"
+									},
+									"recipients": {
+										"value": "@pipeline().parameters.recipients",
+										"type": "Expression"
+									},
+									"PipelineID": {
+										"value": "@pipeline().parameters.PipelineID",
+										"type": "Expression"
+									},
+									"file_type": {
+										"value": "@pipeline().parameters.file_type",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"name": {
+				"type": "string",
+				"defaultValue": "Dia_Sellout.xlsx"
+			},
+			"source_folder_path": {
+				"type": "string",
+				"defaultValue": "/K-C Data Lake/POS/EMEA/Country/Spain/Inbound"
+			},
+			"adls_container": {
+				"type": "string",
+				"defaultValue": "globaldatalake"
+			},
+			"adls_folder": {
+				"type": "string",
+				"defaultValue": "/ExternalSources/RegionalDL/POS/EMEA/Spain/DIA/Raw/Data/"
+			},
+			"adls_arc_container": {
+				"type": "string",
+				"defaultValue": "globaldatalake"
+			},
+			"adls_arc_folder": {
+				"type": "string",
+				"defaultValue": "/ExternalSources/RegionalDL/POS/EMEA/Spain/DIA/Raw/archive/"
+			},
+			"target_table_schema": {
+				"type": "string",
+				"defaultValue": "STAGING_EU_POS"
+			},
+			"target_table": {
+				"type": "string",
+				"defaultValue": "RGM_EM_ES_DIA_POS"
+			},
+			"target_table_load": {
+				"type": "string",
+				"defaultValue": "DROP_CREATE"
+			},
+			"target_table_def": {
+				"type": "string",
+				"defaultValue": "ENSEÑA VARCHAR(50), AÑO VARCHAR(10), MES VARCHAR(10), ORIGEN VARCHAR(20), FAMILIA VARCHAR(40), BARCODE VARCHAR(100), ITEM_DESCRIPTION VARCHAR(60), VENTAS NUMBER(38,4), CUOTA_VENTAS NUMBER(38,4), EVOL_VENTAS NUMBER(38,4), UDS NUMBER(38,4), CUOTA_UDS NUMBER(38,4), EVOL_UDS NUMBER(38,4), AUDIT_LASTMODIFIEDTIME TIMESTAMP_NTZ(9) DEFAULT CURRENT_TIMESTAMP(), AUDIT_SOURCEFILENAME VARCHAR(200), AUDIT_SOURCE VARCHAR(20) DEFAULT ''FLAT FILE'', AUDIT_REGION VARCHAR(10) DEFAULT ''EU'', AUDIT_MARKET VARCHAR(10) DEFAULT ''ES'', DQ_FLAG VARCHAR(20), DQ_DESCRIPTION VARCHAR(700)"
+			},
+			"flow_key": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"run_key": {
+				"type": "string",
+				"defaultValue": "14315"
+			},
+			"job_key": {
+				"type": "string",
+				"defaultValue": "30003"
+			},
+			"skip_line": {
+				"type": "string",
+				"defaultValue": "0"
+			},
+			"cdc_flag": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"cdc_columns": {
+				"type": "string",
+				"defaultValue": "ENSEÑA,AÑO,MES,ORIGEN,BARCODE,ITEM_DESCRIPTION"
+			},
+			"sheet": {
+				"type": "string",
+				"defaultValue": "'Consolidado total'!A1"
+			},
+			"isNotebook": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"notebookPath": {
+				"type": "string",
+				"defaultValue": "/Users/payal.das@kcc.com/KC-EM-ES-POS-DIA"
+			},
+			"isDQNotebook": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"DQNotebookPath": {
+				"type": "string",
+				"defaultValue": "/Shared/KC-RGM/KC-DQ (1B)/KC-DQ-Runnerv2"
+			},
+			"recipients": {
+				"type": "string",
+				"defaultValue": "abhijith.m@kcc.com"
+			},
+			"PipelineID": {
+				"type": "string",
+				"defaultValue": "daf89abf-eab2-4079-b9a5-87c5ad6eaba8"
+			},
+			"file_type": {
+				"type": "string",
+				"defaultValue": "ADLS,EXCEL"
+			}
+		},
+		"folder": {
+			"name": "UIF/MAIN_PIPELINE_JOBS/FLOW"
+		},
+		"annotations": []
+	}
+}

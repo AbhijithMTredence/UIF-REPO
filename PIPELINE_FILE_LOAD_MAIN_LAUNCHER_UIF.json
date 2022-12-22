@@ -1,0 +1,962 @@
+{
+	"name": "PIPELINE_FILE_LOAD_MAIN_LAUNCHER_UIF",
+	"properties": {
+		"activities": [
+			{
+				"name": "LOOKUP_CONFIG_FILE",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "FILE MOVEMENT",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "DATASET_ADLS_JSON_FILE_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": {
+								"value": "drivers/@{toLower(pipeline().globalParameters.env)}",
+								"type": "Expression"
+							},
+							"folder_name": {
+								"value": "config/file_movement",
+								"type": "Expression"
+							},
+							"file_name": {
+								"value": "config_execution_file_load.json",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "FILTER_EXCEL",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LOOKUP_CONFIG_FILE').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(and(equals(split(item().type,',')[1],'EXCEL'),equals(item().execute_flag,'1')), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "FILTER_CSV",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LOOKUP_CONFIG_FILE').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(and(equals(split(item().type,',')[1],'CSV'),equals(item().execute_flag,'1')), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "FOREACH_EXCEL",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_EXCEL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_EXCEL').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 50,
+					"activities": [
+						{
+							"name": "EXCEL_FILE_LOAD_PROCESS",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PIPELINE_EXCEL_FILE_LAUNCHER_UIF",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"flow_key": {
+										"value": "@pipeline().parameters.flow_key",
+										"type": "Expression"
+									},
+									"run_key": {
+										"value": "@pipeline().parameters.run_key",
+										"type": "Expression"
+									},
+									"job_key": {
+										"value": "@item().job_key",
+										"type": "Expression"
+									},
+									"object_name": {
+										"value": "@pipeline().parameters.object_name",
+										"type": "Expression"
+									},
+									"name": {
+										"value": "@item().name",
+										"type": "Expression"
+									},
+									"source_folder_path": {
+										"value": "@item().source_folder_path",
+										"type": "Expression"
+									},
+									"adls_container": {
+										"value": "@item().adls_container",
+										"type": "Expression"
+									},
+									"adls_folder": {
+										"value": "@item().adls_folder",
+										"type": "Expression"
+									},
+									"adls_arc_container": {
+										"value": "@item().adls_arc_container",
+										"type": "Expression"
+									},
+									"adls_arc_folder": {
+										"value": "@item().adls_arc_folder",
+										"type": "Expression"
+									},
+									"target_table_schema": {
+										"value": "@item().target_table_schema",
+										"type": "Expression"
+									},
+									"target_table": {
+										"value": "@item().target_table",
+										"type": "Expression"
+									},
+									"target_table_load": {
+										"value": "@item().target_table_load",
+										"type": "Expression"
+									},
+									"target_table_def": {
+										"value": "@item().target_table_def",
+										"type": "Expression"
+									},
+									"sheet": {
+										"value": "@item().sheet",
+										"type": "Expression"
+									},
+									"skip_line": {
+										"value": "@item().skip_line",
+										"type": "Expression"
+									},
+									"cdc_flag": {
+										"value": "@item().cdc_flag",
+										"type": "Expression"
+									},
+									"cdc_columns": {
+										"value": "@item().cdc_cols",
+										"type": "Expression"
+									},
+									"isNotebook": {
+										"value": "@item().isNotebook",
+										"type": "Expression"
+									},
+									"notebookPath": {
+										"value": "@item().notebookPath",
+										"type": "Expression"
+									},
+									"file_type": {
+										"value": "@item().type",
+										"type": "Expression"
+									},
+									"isDQNotebook": {
+										"value": "@item().isDQNotebook",
+										"type": "Expression"
+									},
+									"DQNotebookPath": {
+										"value": "@item().DQNotebookPath",
+										"type": "Expression"
+									},
+									"recipients": {
+										"value": "@item().recipients",
+										"type": "Expression"
+									},
+									"PipelineID": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"target_table_db": {
+										"value": "@item().target_table_db",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FOREACH_CSV",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_CSV",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_CSV').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 50,
+					"activities": [
+						{
+							"name": "CSV_FILE_LOAD_PROCESS",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PIPELINE_CSV_FILE_LAUNCHER_UIF",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"flow_key": {
+										"value": "@pipeline().parameters.flow_key",
+										"type": "Expression"
+									},
+									"run_key": {
+										"value": "@pipeline().parameters.run_key",
+										"type": "Expression"
+									},
+									"job_key": {
+										"value": "@item().job_key",
+										"type": "Expression"
+									},
+									"object_name": {
+										"value": "@pipeline().parameters.object_name",
+										"type": "Expression"
+									},
+									"name": {
+										"value": "@item().name",
+										"type": "Expression"
+									},
+									"source_folder_path": {
+										"value": "@item().source_folder_path",
+										"type": "Expression"
+									},
+									"adls_container": {
+										"value": "@item().adls_container",
+										"type": "Expression"
+									},
+									"adls_folder": {
+										"value": "@item().adls_folder",
+										"type": "Expression"
+									},
+									"adls_arc_container": {
+										"value": "@item().adls_arc_container",
+										"type": "Expression"
+									},
+									"adls_arc_folder": {
+										"value": "@item().adls_arc_folder",
+										"type": "Expression"
+									},
+									"target_table_schema": {
+										"value": "@item().target_table_schema",
+										"type": "Expression"
+									},
+									"target_table": {
+										"value": "@item().target_table",
+										"type": "Expression"
+									},
+									"target_table_load": {
+										"value": "@item().target_table_load",
+										"type": "Expression"
+									},
+									"target_table_def": {
+										"value": "@item().target_table_def",
+										"type": "Expression"
+									},
+									"sheet": {
+										"value": "@item().sheet",
+										"type": "Expression"
+									},
+									"skip_line": {
+										"value": "@item().skip_line",
+										"type": "Expression"
+									},
+									"cdc_flag": {
+										"value": "@item().cdc_flag",
+										"type": "Expression"
+									},
+									"cdc_columns": {
+										"value": "@item().cdc_cols",
+										"type": "Expression"
+									},
+									"isNotebook": {
+										"value": "@item().isNotebook",
+										"type": "Expression"
+									},
+									"notebookPath": {
+										"value": "@item().notebookPath",
+										"type": "Expression"
+									},
+									"file_type": {
+										"value": "@item().type",
+										"type": "Expression"
+									},
+									"isDQNotebook": {
+										"value": "@item().isDQNotebook",
+										"type": "Expression"
+									},
+									"DQNotebookPath": {
+										"value": "@item().DQNotebookPath",
+										"type": "Expression"
+									},
+									"recipients": {
+										"value": "@item().recipients",
+										"type": "Expression"
+									},
+									"PipelineID": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"target_table_db": {
+										"value": "@item().target_table_db",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FILTER_JSON",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LOOKUP_CONFIG_FILE').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(and(equals(split(item().type,',')[1],'JSON'),equals(item().execute_flag,'1')), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "FOREACH_JSON",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_JSON",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_JSON').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 50,
+					"activities": [
+						{
+							"name": "JSON_FILE_LOAD_PROCESS",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PIPELINE_JSON_FILE_LAUNCHER_UIF",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"flow_key": {
+										"value": "@pipeline().parameters.flow_key",
+										"type": "Expression"
+									},
+									"run_key": {
+										"value": "@pipeline().parameters.run_key",
+										"type": "Expression"
+									},
+									"job_key": {
+										"value": "@item().job_key",
+										"type": "Expression"
+									},
+									"object_name": {
+										"value": "@pipeline().parameters.object_name",
+										"type": "Expression"
+									},
+									"name": {
+										"value": "@item().name",
+										"type": "Expression"
+									},
+									"source_folder_path": {
+										"value": "@item().source_folder_path",
+										"type": "Expression"
+									},
+									"adls_container": {
+										"value": "@item().adls_container",
+										"type": "Expression"
+									},
+									"adls_folder": {
+										"value": "@item().adls_folder",
+										"type": "Expression"
+									},
+									"adls_arc_container": {
+										"value": "@item().adls_arc_container",
+										"type": "Expression"
+									},
+									"adls_arc_folder": {
+										"value": "@item().adls_arc_folder",
+										"type": "Expression"
+									},
+									"target_table_schema": {
+										"value": "@item().target_table_schema",
+										"type": "Expression"
+									},
+									"target_table": {
+										"value": "@item().target_table",
+										"type": "Expression"
+									},
+									"target_table_load": {
+										"value": "@item().target_table_load",
+										"type": "Expression"
+									},
+									"target_table_def": {
+										"value": "@item().target_table_def",
+										"type": "Expression"
+									},
+									"sheet": {
+										"value": "@item().sheet",
+										"type": "Expression"
+									},
+									"cdc_flag": {
+										"value": "@item().cdc_flag",
+										"type": "Expression"
+									},
+									"cdc_columns": {
+										"value": "@item().cdc_cols",
+										"type": "Expression"
+									},
+									"skip_line": {
+										"value": "@item().skip_line",
+										"type": "Expression"
+									},
+									"file_type": {
+										"value": "@item().type",
+										"type": "Expression"
+									},
+									"isNotebook": {
+										"value": "@item().isNotebook",
+										"type": "Expression"
+									},
+									"notebookPath": {
+										"value": "@item().notebookPath",
+										"type": "Expression"
+									},
+									"isDQNotebook": {
+										"value": "@item().isDQNotebook",
+										"type": "Expression"
+									},
+									"DQNotebookPath": {
+										"value": "@item().DQNotebookPath",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FILTER_TEXT",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LOOKUP_CONFIG_FILE').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(and(equals(split(item().type,',')[1],'TEXT'),equals(item().execute_flag,'1')), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "FOREACH_TEXT",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_TEXT",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_TEXT').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 50,
+					"activities": [
+						{
+							"name": "TEXT_FILE_LOAD_PROCESS",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PIPELINE_TEXT_FILE_LAUNCHER_UIF",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"flow_key": {
+										"value": "@pipeline().parameters.flow_key",
+										"type": "Expression"
+									},
+									"run_key": {
+										"value": "@pipeline().parameters.run_key",
+										"type": "Expression"
+									},
+									"job_key": {
+										"value": "@item().job_key",
+										"type": "Expression"
+									},
+									"object_name": {
+										"value": "@pipeline().parameters.object_name",
+										"type": "Expression"
+									},
+									"name": {
+										"value": "@item().name",
+										"type": "Expression"
+									},
+									"source_folder_path": {
+										"value": "@item().source_folder_path",
+										"type": "Expression"
+									},
+									"adls_container": {
+										"value": "@item().adls_container",
+										"type": "Expression"
+									},
+									"adls_folder": {
+										"value": "@item().adls_folder",
+										"type": "Expression"
+									},
+									"adls_arc_container": {
+										"value": "@item().adls_arc_container",
+										"type": "Expression"
+									},
+									"adls_arc_folder": {
+										"value": "@item().adls_arc_folder",
+										"type": "Expression"
+									},
+									"target_table_schema": {
+										"value": "@item().target_table_schema",
+										"type": "Expression"
+									},
+									"target_table": {
+										"value": "@item().target_table",
+										"type": "Expression"
+									},
+									"target_table_load": {
+										"value": "@item().target_table_load",
+										"type": "Expression"
+									},
+									"target_table_def": {
+										"value": "@item().target_table_def",
+										"type": "Expression"
+									},
+									"sheet": {
+										"value": "@item().sheet",
+										"type": "Expression"
+									},
+									"skip_line": {
+										"value": "@item().skip_line",
+										"type": "Expression"
+									},
+									"cdc_flag": {
+										"value": "@item().cdc_flag",
+										"type": "Expression"
+									},
+									"cdc_columns": {
+										"value": "@item().cdc_cols",
+										"type": "Expression"
+									},
+									"isNotebook": {
+										"value": "@item().isNotebook",
+										"type": "Expression"
+									},
+									"notebookPath": {
+										"value": "@item().notebookPath",
+										"type": "Expression"
+									},
+									"isDQNotebook": {
+										"value": "@item().isDQNotebook",
+										"type": "Expression"
+									},
+									"DQNotebookPath": {
+										"value": "@item().DQNotebookPath",
+										"type": "Expression"
+									},
+									"file_type": {
+										"value": "@item().type",
+										"type": "Expression"
+									},
+									"target_table_db": {
+										"value": "@item().target_table_db",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FILTER_PARQUET",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LOOKUP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LOOKUP_CONFIG_FILE').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(and(equals(split(item().type,',')[1],'PARQUET'),equals(item().execute_flag,'1')), contains(pipeline().parameters.Jobs,string(item().job_key)))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "FOREACH_PARQUET",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FILTER_PARQUET",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FILTER_PARQUET').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 50,
+					"activities": [
+						{
+							"name": "PARQUET_FILE_LOAD_PROCESS",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PIPELINE_PARQUET_FILE_LAUNCHER_UIF",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"flow_key": {
+										"value": "@pipeline().parameters.flow_key",
+										"type": "Expression"
+									},
+									"run_key": {
+										"value": "@pipeline().parameters.run_key",
+										"type": "Expression"
+									},
+									"job_key": {
+										"value": "@item().job_key",
+										"type": "Expression"
+									},
+									"object_name": {
+										"value": "@pipeline().parameters.object_name",
+										"type": "Expression"
+									},
+									"name": {
+										"value": "@item().name",
+										"type": "Expression"
+									},
+									"source_folder_path": {
+										"value": "@item().source_folder_path",
+										"type": "Expression"
+									},
+									"adls_container": {
+										"value": "@item().adls_container",
+										"type": "Expression"
+									},
+									"adls_folder": {
+										"value": "@item().adls_folder",
+										"type": "Expression"
+									},
+									"adls_arc_container": {
+										"value": "@item().adls_arc_container",
+										"type": "Expression"
+									},
+									"adls_arc_folder": {
+										"value": "@item().adls_arc_folder",
+										"type": "Expression"
+									},
+									"target_table_schema": {
+										"value": "@item().target_table_schema",
+										"type": "Expression"
+									},
+									"target_table": {
+										"value": "@item().target_table",
+										"type": "Expression"
+									},
+									"target_table_load": {
+										"value": "@item().target_table_load",
+										"type": "Expression"
+									},
+									"target_table_def": {
+										"value": "@item().target_table_def",
+										"type": "Expression"
+									},
+									"sheet": {
+										"value": "@item().sheet",
+										"type": "Expression"
+									},
+									"skip_line": {
+										"value": "@item().skip_line",
+										"type": "Expression"
+									},
+									"isNotebook": {
+										"value": "@item().isNotebook",
+										"type": "Expression"
+									},
+									"notebookPath": {
+										"value": "@item().notebookPath",
+										"type": "Expression"
+									},
+									"isDQNotebook": {
+										"value": "@item().isDQNotebook",
+										"type": "Expression"
+									},
+									"DQNotebookPath": {
+										"value": "@item().DQNotebookPath",
+										"type": "Expression"
+									},
+									"cdc_flag": {
+										"value": "@item().cdc_flag",
+										"type": "Expression"
+									},
+									"cdc_columns": {
+										"value": "@item().cdc_cols",
+										"type": "Expression"
+									},
+									"file_type": {
+										"value": "@item().type",
+										"type": "Expression"
+									},
+									"recipients": {
+										"value": "@item().recipients",
+										"type": "Expression"
+									},
+									"PipelineID": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"target_table_db": {
+										"value": "@item().target_table_db",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "FILE MOVEMENT",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "FileServerReadSettings",
+							"recursive": true
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings"
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "DATASET_FILE_SYSTEM_BINARY_FILE_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder_name": {
+								"value": "@replace('Corporate//RGM//UIL//RGM_GBL//DRIVERS//env//CONFIG//FILE_MOVEMENT','env',pipeline().globalParameters.env)",
+								"type": "Expression"
+							},
+							"file_name": {
+								"value": "config_execution_file_load.json",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DATASET_ADLS_BINARY_FILE_UIF",
+						"type": "DatasetReference",
+						"parameters": {
+							"container_name": {
+								"value": "drivers/@{toLower(pipeline().globalParameters.env)}",
+								"type": "Expression"
+							},
+							"folder_name": {
+								"value": "config/file_movement",
+								"type": "Expression"
+							},
+							"file_name": {
+								"value": "config_execution_file_load.json",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"flow_key": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"run_key": {
+				"type": "string"
+			},
+			"object_name": {
+				"type": "string",
+				"defaultValue": "FILE_MOVEMENT"
+			},
+			"Jobs": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"RESULT": {
+				"type": "String"
+			},
+			"error_check": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "UIF/LAUNCHER_JOBS"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-10-12T04:21:31Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,244 @@
+{
+	"name": "PIPELINE_HANA_BIG_SET_DELTA_UIF",
+	"properties": {
+		"activities": [
+			{
+				"name": "SPLIT_DATA_AND_LOAD",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CHECK_DELTA",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PIPELINE_HANA_BIG_TBL_LOAD_UIF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"source_table": {
+							"value": "@pipeline().parameters.source_table",
+							"type": "Expression"
+						},
+						"filter_col": {
+							"value": "@pipeline().parameters.filter_col",
+							"type": "Expression"
+						},
+						"adls_container": {
+							"value": "@pipeline().parameters.adls_container",
+							"type": "Expression"
+						},
+						"adls_folder": {
+							"value": "@pipeline().parameters.adls_folder",
+							"type": "Expression"
+						},
+						"snowflake_table": {
+							"value": "@pipeline().parameters.snowflake_table",
+							"type": "Expression"
+						},
+						"delta_condition": {
+							"value": "@variables('delta_condition')",
+							"type": "Expression"
+						},
+						"target_table_load": {
+							"value": "@pipeline().parameters.target_table_load",
+							"type": "Expression"
+						},
+						"snowflake_table_def": {
+							"value": "@pipeline().parameters.snowflake_table_def",
+							"type": "Expression"
+						},
+						"flow_key": {
+							"value": "@pipeline().parameters.flow_key",
+							"type": "Expression"
+						},
+						"run_key": {
+							"value": "@pipeline().parameters.run_key",
+							"type": "Expression"
+						},
+						"job_key": {
+							"value": "@pipeline().parameters.job_key",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "CHECK_DELTA",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.if_delta,'1')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "NO_DELTA_CONDITION",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "delta_condition",
+								"value": "1=1"
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "GET_DELTA_CONDITION",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SnowflakeSource",
+									"query": {
+										"value": "CALL STAGING_GBL.SP_GET_STAGE_DELTA_CONDITION('@{pipeline().parameters.source_table}', 'DELTA', @{pipeline().parameters.run_key} , @{pipeline().parameters.job_key}, '@{pipeline().parameters.snowflake_table}')",
+										"type": "Expression"
+									},
+									"exportSettings": {
+										"type": "SnowflakeExportCopyCommand"
+									}
+								},
+								"dataset": {
+									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
+									"type": "DatasetReference"
+								},
+								"firstRowOnly": false
+							}
+						},
+						{
+							"name": "DELTA_CONDITION",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "GET_DELTA_CONDITION",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "delta_condition",
+								"value": {
+									"value": "@{activity('GET_DELTA_CONDITION').output.value[0].SP_GET_STAGE_DELTA_CONDITION}",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "SET_DELTA",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "SPLIT_DATA_AND_LOAD",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.if_delta,'1')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "SET_DELTA_CONDITION",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SnowflakeSource",
+									"query": {
+										"value": "CALL STAGING_GBL.SP_SET_STAGE_DELTA_CONDITION('@{pipeline().parameters.source_table}', @{pipeline().parameters.run_key}, @{pipeline().parameters.job_key}, '@{pipeline().parameters.snowflake_table}')",
+										"type": "Expression"
+									},
+									"exportSettings": {
+										"type": "SnowflakeExportCopyCommand"
+									}
+								},
+								"dataset": {
+									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
+									"type": "DatasetReference"
+								},
+								"firstRowOnly": false
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"source_table": {
+				"type": "string"
+			},
+			"snowflake_table": {
+				"type": "string"
+			},
+			"if_delta": {
+				"type": "string"
+			},
+			"filter_col": {
+				"type": "string"
+			},
+			"adls_container": {
+				"type": "string"
+			},
+			"adls_folder": {
+				"type": "string"
+			},
+			"target_table_load": {
+				"type": "string"
+			},
+			"snowflake_table_def": {
+				"type": "string"
+			},
+			"flow_key": {
+				"type": "string"
+			},
+			"run_key": {
+				"type": "string"
+			},
+			"job_key": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"delta_condition": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "UIF/MAIN_PIPELINE_JOBS/TABLE_LOAD_FLOW"
+		},
+		"annotations": []
+	}
+}
