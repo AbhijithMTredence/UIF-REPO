@@ -32,7 +32,7 @@
 						"type": "DatasetReference",
 						"parameters": {
 							"containerName": {
-								"value": "drivers/@{toLower(pipeline().globalParameters.env)}",
+								"value": "drivers/DEV",
 								"type": "Expression"
 							},
 							"folderName": "email_list",
