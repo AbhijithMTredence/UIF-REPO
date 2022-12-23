@@ -547,6 +547,18 @@
 				}
 			}
 		],
+		"parameters": {
+			"flow_key": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"run_key": {
+				"type": "string"
+			},
+			"job_key": {
+				"type": "string"
+			}
+		},
 		"variables": {
 			"error_check": {
 				"type": "String"
