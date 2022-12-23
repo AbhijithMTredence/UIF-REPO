@@ -223,12 +223,6 @@
 									"path": "sf-staging/UIF"
 								}
 							},
-							"inputs": [
-								{
-									"referenceName": "DATASET_SAP_HANA_SOURCE_UIF",
-									"type": "DatasetReference"
-								}
-							],
 							"outputs": [
 								{
 									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
@@ -288,12 +282,6 @@
 									"path": "sf-staging/UIF"
 								}
 							},
-							"inputs": [
-								{
-									"referenceName": "DATASET_SAP_HANA_SOURCE_UIF",
-									"type": "DatasetReference"
-								}
-							],
 							"outputs": [
 								{
 									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",

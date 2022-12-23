@@ -167,10 +167,6 @@
 									},
 									"partitionOption": "None"
 								},
-								"dataset": {
-									"referenceName": "DATASET_SAP_HANA_SOURCE_UIF",
-									"type": "DatasetReference"
-								},
 								"firstRowOnly": false
 							}
 						},
@@ -216,10 +212,6 @@
 										"type": "Expression"
 									},
 									"partitionOption": "None"
-								},
-								"dataset": {
-									"referenceName": "DATASET_SAP_HANA_SOURCE_UIF",
-									"type": "DatasetReference"
 								},
 								"firstRowOnly": false
 							}
