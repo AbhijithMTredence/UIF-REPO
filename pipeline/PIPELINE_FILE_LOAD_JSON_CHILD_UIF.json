@@ -89,7 +89,14 @@
 						{
 							"name": "COPY_ADLS_ARC_JSON",
 							"type": "Copy",
-							"dependsOn": [],
+							"dependsOn": [
+								{
+									"activity": "COPY_FS_ADLS_JSON_ADLS",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
 							"policy": {
 								"timeout": "7.00:00:00",
 								"retry": 0,
