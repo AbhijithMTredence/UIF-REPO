@@ -234,36 +234,9 @@
 					],
 					"ifTrueActivities": [
 						{
-							"name": "SET_TARGET_TBL",
-							"type": "SetVariable",
-							"dependsOn": [
-								{
-									"activity": "COPY_ADLS_ARC_TEXT",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"userProperties": [],
-							"typeProperties": {
-								"variableName": "count",
-								"value": {
-									"value": "@pipeline().parameters.target_table",
-									"type": "Expression"
-								}
-							}
-						},
-						{
-							"name": "COPY_ADLS_ARC_TEXT",
+							"name": "COPY_ADLS_TEXT_ADLS",
 							"type": "Copy",
-							"dependsOn": [
-								{
-									"activity": "COPY_FROM_SOURCE",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
+							"dependsOn": [],
 							"policy": {
 								"timeout": "7.00:00:00",
 								"retry": 0,
@@ -322,7 +295,7 @@
 											"type": "Expression"
 										},
 										"folder_name": {
-											"value": "@concat(pipeline().parameters.adls_arc_folder, formatDateTime(utcnow(), 'yyyy-MM-ddTHH:MM'))",
+											"value": "@concat(pipeline().parameters.adls_folder, formatDateTime(utcnow(), 'yyyy/MM/dd'))",
 											"type": "Expression"
 										}
 									}
@@ -330,99 +303,156 @@
 							]
 						},
 						{
-							"name": "COPY_FROM_SOURCE",
-							"type": "ExecutePipeline",
-							"dependsOn": [],
+							"name": "COPY_ADLS_ARC_TEXT_RAW",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "COPY_ADLS_TEXT_ADLS",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
 							"userProperties": [],
 							"typeProperties": {
-								"pipeline": {
-									"referenceName": "COPY_FROM_SOURCE_TEXT_UIF",
-									"type": "PipelineReference"
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"wildcardFileName": {
+											"value": "@replace(pipeline().parameters.name,'.xl','*.xl*')",
+											"type": "Expression"
+										},
+										"deleteFilesAfterCompletion": false
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
 								},
-								"waitOnCompletion": true,
-								"parameters": {
-									"name": {
-										"value": "@pipeline().parameters.name",
-										"type": "Expression"
-									},
-									"source_folder_path": {
-										"value": "@pipeline().parameters.source_folder_path",
-										"type": "Expression"
-									},
-									"adls_container": {
-										"value": "@pipeline().parameters.adls_container",
-										"type": "Expression"
-									},
-									"adls_folder": {
-										"value": "@pipeline().parameters.adls_folder",
-										"type": "Expression"
-									},
-									"adls_arc_container": {
-										"value": "@pipeline().parameters.adls_arc_container",
-										"type": "Expression"
-									},
-									"adls_arc_folder": {
-										"value": "@pipeline().parameters.adls_arc_folder",
-										"type": "Expression"
-									},
-									"target_table_schema": {
-										"value": "@pipeline().parameters.target_table_schema",
-										"type": "Expression"
-									},
-									"target_table": {
-										"value": "@pipeline().parameters.target_table",
-										"type": "Expression"
-									},
-									"target_table_load": {
-										"value": "@pipeline().parameters.target_table_load",
-										"type": "Expression"
-									},
-									"target_table_def": {
-										"value": "@pipeline().parameters.target_table_def",
-										"type": "Expression"
-									},
-									"flow_key": {
-										"value": "@pipeline().parameters.flow_key",
-										"type": "Expression"
-									},
-									"run_key": {
-										"value": "@pipeline().parameters.run_key",
-										"type": "Expression"
-									},
-									"job_key": {
-										"value": "@pipeline().parameters.job_key",
-										"type": "Expression"
-									},
-									"skip_line": {
-										"value": "@pipeline().parameters.skip_line",
-										"type": "Expression"
-									},
-									"cdc_flag": {
-										"value": "@pipeline().parameters.cdc_flag",
-										"type": "Expression"
-									},
-									"cdc_columns": {
-										"value": "@pipeline().parameters.cdc_columns",
-										"type": "Expression"
-									},
-									"isNotebook": {
-										"value": "@pipeline().parameters.isNotebook",
-										"type": "Expression"
-									},
-									"notebookPath": {
-										"value": "@pipeline().parameters.notebookPath",
-										"type": "Expression"
-									},
-									"sheet": {
-										"value": "@pipeline().parameters.sheet",
-										"type": "Expression"
-									},
-									"file_type": {
-										"value": "@pipeline().parameters.file_type",
-										"type": "Expression"
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@concat(pipeline().parameters.adls_folder, formatDateTime(utcNow(), 'yyyy/MM/dd'))",
+											"type": "Expression"
+										}
 									}
 								}
-							}
+							],
+							"outputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_arc_container",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@concat(pipeline().parameters.adls_arc_folder, formatDateTime(utcNow(), 'yyyy-MM-ddTHH:MM'))",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "COPY_ADLS_ARC_EXCEL_REFINE",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "COPY_ADLS_TEXT_ADLS",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"wildcardFileName": {
+											"value": "@concat('*', split(pipeline().parameters.name, '.')[0], '*')",
+											"type": "Expression"
+										},
+										"deleteFilesAfterCompletion": false
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@concat(replace(pipeline().parameters.adls_folder, 'Raw', 'Refine'), formatDateTime(utcNow(), 'yyyy/MM/dd'))",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_arc_container",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@concat(replace(pipeline().parameters.adls_arc_folder, 'Raw', 'Refine'), formatDateTime(utcNow(), 'yyyy-MM-ddTHH:MM'))",
+											"type": "Expression"
+										}
+									}
+								}
+							]
 						}
 					]
 				}
