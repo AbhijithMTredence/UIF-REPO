@@ -9,15 +9,11 @@
 			"password": {
 				"type": "AzureKeyVaultSecret",
 				"store": {
-					"referenceName": "LS_RGM_AKV",
+					"referenceName": "LS_RGM_AKV_UIF",
 					"type": "LinkedServiceReference"
 				},
 				"secretName": "SECRET-MDS-USER-PWD"
 			}
-		},
-		"connectVia": {
-			"referenceName": "coreintruntime",
-			"type": "IntegrationRuntimeReference"
 		}
 	},
 	"type": "Microsoft.DataFactory/factories/linkedservices"
