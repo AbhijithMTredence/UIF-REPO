@@ -37,7 +37,7 @@
 				"type": "IfCondition",
 				"dependsOn": [
 					{
-						"activity": "JOB_START",
+						"activity": "SET JOB_START",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -584,6 +584,26 @@
 							]
 						}
 					]
+				}
+			},
+			{
+				"name": "SET JOB_START",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "JOB_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "job_start",
+					"value": {
+						"value": "@string(activity('JOB_START').output.firstRow.SP_JOB_START)",
+						"type": "Expression"
+					}
 				}
 			}
 		],
