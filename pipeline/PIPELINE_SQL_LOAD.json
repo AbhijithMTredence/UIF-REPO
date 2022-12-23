@@ -18,7 +18,7 @@
 					"source": {
 						"type": "SnowflakeSource",
 						"query": {
-							"value": "CALL STAGING_GBL.SP_JOB_START(@{pipeline().parameters.run_key}, @{item().job_key}, '@{item().snowflake_table}');",
+							"value": "CALL STAGING_GBL.SP_JOB_START(@{pipeline().parameters.run_key}, @{pipeline().parameters.job_key}, '@{pipeline().parameters.snowflake_table}');",
 							"type": "Expression"
 						},
 						"exportSettings": {
@@ -73,7 +73,7 @@
 								"source": {
 									"type": "SnowflakeSource",
 									"query": {
-										"value": "CALL STAGING_GBL.SP_ERROR_LOG_ETL('@{item().snowflake_table}', @{pipeline().parameters.flow_key}, @{item().job_key}, @{pipeline().parameters.run_key}, @{activity('JOB_START1').output.firstRow.SP_JOB_START}, 'ERROR IN SQL FILE LOAD', '');",
+										"value": "CALL STAGING_GBL.SP_ERROR_LOG_ETL('@{pipeline().parameters.snowflake_table}', @{pipeline().parameters.flow_key}, @{pipeline().parameters.job_key}, @{pipeline().parameters.run_key}, @{activity('JOB_START1').output.firstRow.SP_JOB_START}, 'ERROR IN SQL FILE LOAD', '');",
 										"type": "Expression"
 									},
 									"exportSettings": {
@@ -204,7 +204,7 @@
 										"type": "Expression"
 									},
 									"SUBJECT": {
-										"value": "RGM_Update : (@{pipeline().globalParameters.env}) RGM MASTER PIPELINE FAILED AT @{utcnow()} UTC ",
+										"value": "RGM_Update : (DEV) RGM MASTER PIPELINE FAILED AT @{utcnow()} UTC ",
 										"type": "Expression"
 									}
 								}
@@ -223,35 +223,35 @@
 								"waitOnCompletion": true,
 								"parameters": {
 									"source_table": {
-										"value": "@item().source_table",
+										"value": "@pipeline().parameters.source_table",
 										"type": "Expression"
 									},
 									"filter_col": {
-										"value": "@item().filter_col",
+										"value": "@pipeline().parameters.filter_col",
 										"type": "Expression"
 									},
 									"adls_container": {
-										"value": "@item().adls_container",
+										"value": "@pipeline().parameters.adls_container",
 										"type": "Expression"
 									},
 									"adls_folder": {
-										"value": "@item().adls_folder",
+										"value": "@pipeline().parameters.adls_folder",
 										"type": "Expression"
 									},
 									"snowflake_table": {
-										"value": "@item().snowflake_table",
+										"value": "@pipeline().parameters.snowflake_table",
 										"type": "Expression"
 									},
 									"if_delta": {
-										"value": "@item().if_delta",
+										"value": "@pipeline().parameters.if_delta",
 										"type": "Expression"
 									},
 									"target_table_load": {
-										"value": "@item().target_table_load",
+										"value": "@pipeline().parameters.target_table_load",
 										"type": "Expression"
 									},
 									"snowflake_table_def": {
-										"value": "@item().snowflake_table_def",
+										"value": "@pipeline().parameters.snowflake_table_def",
 										"type": "Expression"
 									},
 									"flow_key": {
@@ -263,11 +263,11 @@
 										"type": "Expression"
 									},
 									"job_key": {
-										"value": "@item().job_key",
+										"value": "@pipeline().parameters.job_key",
 										"type": "Expression"
 									},
 									"query": {
-										"value": "@item().query",
+										"value": "@pipeline().parameters.query",
 										"type": "Expression"
 									}
 								}
@@ -316,7 +316,7 @@
 								"source": {
 									"type": "SnowflakeSource",
 									"query": {
-										"value": "CALL STAGING_GBL.SP_CHECK_FOR_ERROR(@{pipeline().parameters.flow_key}, @{item().job_key}, @{pipeline().parameters.run_key});",
+										"value": "CALL STAGING_GBL.SP_CHECK_FOR_ERROR(@{pipeline().parameters.flow_key}, @{pipeline().parameters.job_key}, @{pipeline().parameters.run_key});",
 										"type": "Expression"
 									},
 									"exportSettings": {
@@ -369,7 +369,7 @@
 										"source": {
 											"type": "SnowflakeSource",
 											"query": {
-												"value": "CALL STAGING_GBL.SP_JOB_END(@{activity('JOB_START1').output.firstRow.SP_JOB_START}, @{item().job_key}, @{pipeline().parameters.flow_key}, @{pipeline().parameters.run_key});",
+												"value": "CALL STAGING_GBL.SP_JOB_END(@{activity('JOB_START1').output.firstRow.SP_JOB_START}, @{pipeline().parameters.job_key}, @{pipeline().parameters.flow_key}, @{pipeline().parameters.run_key});",
 												"type": "Expression"
 											},
 											"exportSettings": {
@@ -437,7 +437,7 @@
 										"source": {
 											"type": "SnowflakeSource",
 											"query": {
-												"value": "CALL STAGING_GBL.SP_ERROR_LOG_ETL('@{item().snowflake_table}', @{pipeline().parameters.flow_key}, @{item().job_key}, @{pipeline().parameters.run_key}, @{activity('JOB_START1').output.firstRow.SP_JOB_START}, 'Check error log table for the error message', '');",
+												"value": "CALL STAGING_GBL.SP_ERROR_LOG_ETL('@{pipeline().parameters.snowflake_table}', @{pipeline().parameters.flow_key}, @{pipeline().parameters.job_key}, @{pipeline().parameters.run_key}, @{activity('JOB_START1').output.firstRow.SP_JOB_START}, 'Check error log table for the error message', '');",
 												"type": "Expression"
 											},
 											"exportSettings": {
@@ -535,7 +535,7 @@
 												"type": "Expression"
 											},
 											"SUBJECT": {
-												"value": "RGM_Update : (@{pipeline().globalParameters.env}) RGM - MASTER PIPELINE FAILED AT @{utcnow()} UTC ",
+												"value": "RGM_Update : (DEV) RGM - MASTER PIPELINE FAILED AT @{utcnow()} UTC ",
 												"type": "Expression"
 											}
 										}
@@ -557,10 +557,43 @@
 			},
 			"job_key": {
 				"type": "string"
+			},
+			"source_table": {
+				"type": "string"
+			},
+			"filter_col": {
+				"type": "string"
+			},
+			"adls_container": {
+				"type": "string"
+			},
+			"adls_folder": {
+				"type": "string"
+			},
+			"snowflake_table": {
+				"type": "string"
+			},
+			"if_delta": {
+				"type": "string"
+			},
+			"target_table_load": {
+				"type": "string"
+			},
+			"snowflake_table_def": {
+				"type": "string"
+			},
+			"query": {
+				"type": "string"
+			},
+			"subject": {
+				"type": "string"
 			}
 		},
 		"variables": {
 			"error_check": {
+				"type": "String"
+			},
+			"RESULT": {
 				"type": "String"
 			}
 		},
