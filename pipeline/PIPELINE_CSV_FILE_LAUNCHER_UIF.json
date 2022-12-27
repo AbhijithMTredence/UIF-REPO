@@ -591,7 +591,7 @@
 												"type": "Expression"
 											},
 											"SUBJECT": {
-												"value": "RGM_Update : (@{pipeline().globalParameters.env}) RGM - MASTER PIPELINE FAILED AT @{utcnow()} UTC ",
+												"value": "RGM_Update : (@DEV) RGM - MASTER PIPELINE FAILED AT @{utcnow()} UTC ",
 												"type": "Expression"
 											}
 										}
