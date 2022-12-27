@@ -705,6 +705,9 @@
 			},
 			"error_check": {
 				"type": "String"
+			},
+			"job_start": {
+				"type": "String"
 			}
 		},
 		"folder": {
