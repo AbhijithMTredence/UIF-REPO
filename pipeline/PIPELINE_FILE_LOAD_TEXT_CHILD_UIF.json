@@ -379,7 +379,7 @@
 							]
 						},
 						{
-							"name": "COPY_ADLS_ARC_EXCEL_REFINE",
+							"name": "COPY_ADLS_ARC_TEXT_REFINE",
 							"type": "Copy",
 							"dependsOn": [
 								{
