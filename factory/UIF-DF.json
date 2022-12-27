@@ -1,0 +1,12 @@
+{
+	"name": "UIF-DF",
+	"properties": {
+		"globalParameters": {
+			"env": {
+				"type": "string",
+				"value": "DEV"
+			}
+		}
+	},
+	"location": "eastus"
+}
