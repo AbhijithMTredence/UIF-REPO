@@ -1,36 +1,6 @@
 {
 	"name": "COPY_FROM_SOURCE_PARQUET_UIF",
 	"properties": {
-		"activities": [
-			{
-				"name": "COPY_TO_ADLS",
-				"type": "Switch",
-				"dependsOn": [],
-				"userProperties": [],
-				"typeProperties": {
-					"on": {
-						"value": "@split(pipeline().parameters.file_type,',')[0]",
-						"type": "Expression"
-					},
-					"cases": [
-						{
-							"value": "ADLS",
-							"activities": [
-								{
-									"name": "Wait1",
-									"type": "Wait",
-									"dependsOn": [],
-									"userProperties": [],
-									"typeProperties": {
-										"waitTimeInSeconds": 1
-									}
-								}
-							]
-						}
-					]
-				}
-			}
-		],
 		"parameters": {
 			"name": {
 				"type": "string"
