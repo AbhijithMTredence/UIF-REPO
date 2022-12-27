@@ -5,7 +5,14 @@
 			{
 				"name": "CHECK_JOB_STATUS",
 				"type": "IfCondition",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "LOAD_CSV_FILES_copy1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
@@ -563,6 +570,125 @@
 							]
 						}
 					]
+				}
+			},
+			{
+				"name": "LOAD_CSV_FILES_copy1",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PIPELINE_FILE_LOAD_CSV_CHILD_UIF",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"name": {
+							"value": "@pipeline().parameters.name",
+							"type": "Expression"
+						},
+						"source_folder_path": {
+							"value": "@pipeline().parameters.source_folder_path",
+							"type": "Expression"
+						},
+						"adls_container": {
+							"value": "@pipeline().parameters.adls_container",
+							"type": "Expression"
+						},
+						"adls_folder": {
+							"value": "@pipeline().parameters.adls_folder",
+							"type": "Expression"
+						},
+						"adls_arc_container": {
+							"value": "@pipeline().parameters.adls_arc_container",
+							"type": "Expression"
+						},
+						"adls_arc_folder": {
+							"value": "@pipeline().parameters.adls_arc_folder",
+							"type": "Expression"
+						},
+						"target_table_schema": {
+							"value": "@pipeline().parameters.target_table_schema",
+							"type": "Expression"
+						},
+						"target_table": {
+							"value": "@pipeline().parameters.target_table",
+							"type": "Expression"
+						},
+						"target_table_load": {
+							"value": "@pipeline().parameters.target_table_load",
+							"type": "Expression"
+						},
+						"target_table_def": {
+							"value": "@pipeline().parameters.target_table_def",
+							"type": "Expression"
+						},
+						"flow_key": {
+							"value": "@pipeline().parameters.flow_key",
+							"type": "Expression"
+						},
+						"run_key": {
+							"value": "@pipeline().parameters.run_key",
+							"type": "Expression"
+						},
+						"job_key": {
+							"value": "@pipeline().parameters.job_key",
+							"type": "Expression"
+						},
+						"skip_line": {
+							"value": "@pipeline().parameters.skip_line",
+							"type": "Expression"
+						},
+						"cdc_flag": {
+							"value": "@pipeline().parameters.cdc_flag",
+							"type": "Expression"
+						},
+						"cdc_columns": {
+							"value": "@pipeline().parameters.cdc_columns",
+							"type": "Expression"
+						},
+						"isNotebook": {
+							"value": "@pipeline().parameters.isNotebook",
+							"type": "Expression"
+						},
+						"notebookPath": {
+							"value": "@pipeline().parameters.notebookPath",
+							"type": "Expression"
+						},
+						"sheet": {
+							"value": "@pipeline().parameters.sheet",
+							"type": "Expression"
+						},
+						"file_type": {
+							"value": "@pipeline().parameters.file_type",
+							"type": "Expression"
+						},
+						"isDQNotebook": {
+							"value": "@pipeline().parameters.isDQNotebook",
+							"type": "Expression"
+						},
+						"DQNotebookPath": {
+							"value": "@pipeline().parameters.DQNotebookPath",
+							"type": "Expression"
+						},
+						"recipients": {
+							"value": "@pipeline().parameters.recipients",
+							"type": "Expression"
+						},
+						"PipelineID": {
+							"value": "@pipeline().parameters.PipelineID",
+							"type": "Expression"
+						},
+						"target_table_db": {
+							"value": "@pipeline().parameters.target_table_db",
+							"type": "Expression"
+						},
+						"job_start": {
+							"value": "@variables('job_start')",
+							"type": "Expression"
+						}
+					}
 				}
 			}
 		],
