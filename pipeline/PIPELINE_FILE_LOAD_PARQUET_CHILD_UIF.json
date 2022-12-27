@@ -7,7 +7,7 @@
 				"type": "IfCondition",
 				"dependsOn": [
 					{
-						"activity": "SET COUNT_ADLS_copy1",
+						"activity": "SET COUNT_ADLS",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -379,7 +379,7 @@
 				}
 			},
 			{
-				"name": "CHECK_IF_FILE_EXISTS_ADLS_copy1",
+				"name": "CHECK_IF_FILE_EXISTS_ADLS",
 				"type": "GetMetadata",
 				"dependsOn": [],
 				"policy": {
@@ -420,11 +420,11 @@
 				}
 			},
 			{
-				"name": "FILTER_FILE_ADLS_copy1",
+				"name": "FILTER_FILE_ADLS",
 				"type": "Filter",
 				"dependsOn": [
 					{
-						"activity": "CHECK_IF_FILE_EXISTS_ADLS_copy1",
+						"activity": "CHECK_IF_FILE_EXISTS_ADLS",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -443,11 +443,11 @@
 				}
 			},
 			{
-				"name": "SET COUNT_ADLS_copy1",
+				"name": "SET COUNT_ADLS",
 				"type": "SetVariable",
 				"dependsOn": [
 					{
-						"activity": "FILTER_FILE_ADLS_copy1",
+						"activity": "FILTER_FILE_ADLS",
 						"dependencyConditions": [
 							"Succeeded"
 						]
