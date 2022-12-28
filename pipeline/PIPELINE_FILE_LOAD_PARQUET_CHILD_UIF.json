@@ -103,7 +103,7 @@
 									"type": "BinarySource",
 									"storeSettings": {
 										"type": "AzureBlobFSReadSettings",
-										"recursive": true,
+										"recursive": false,
 										"wildcardFileName": {
 											"value": "@concat(split(pipeline().parameters.name, '.')[0],'*')",
 											"type": "Expression"
