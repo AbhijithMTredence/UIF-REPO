@@ -144,7 +144,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"container_name": {
-											"value": "@pipeline().parameters.adls_arc_container",
+											"value": "@pipeline().parameters.adls_container",
 											"type": "Expression"
 										},
 										"folder_name": {
