@@ -284,7 +284,7 @@
 											"type": "Expression"
 										},
 										"folder_name": {
-											"value": "@concat(replace(pipeline().parameters.adls_folder, 'Raw', 'Refine'), '/',formatDateTime(utcNow(), 'yyyy-MM-ddTHH:MM'))",
+											"value": "@concat(pipeline().parameters.adls_folder, '/',formatDateTime(utcNow(), 'yyyy-MM-ddTHH:MM'))",
 											"type": "Expression"
 										}
 									}
