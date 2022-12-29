@@ -83,12 +83,6 @@
 																		"type": "DelimitedTextReadSettings"
 																	}
 																},
-																"sink": {
-																	"type": "BinarySink",
-																	"storeSettings": {
-																		"type": "AzureBlobFSWriteSettings"
-																	}
-																},
 																"enableStaging": true,
 																"stagingSettings": {
 																	"linkedServiceName": {
@@ -113,22 +107,6 @@
 																		},
 																		"file_name": {
 																			"value": "@item().adls_file",
-																			"type": "Expression"
-																		}
-																	}
-																}
-															],
-															"outputs": [
-																{
-																	"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
-																	"type": "DatasetReference",
-																	"parameters": {
-																		"container_name": {
-																			"value": "@pipeline().parameters.adls_container_unzip",
-																			"type": "Expression"
-																		},
-																		"folder_name": {
-																			"value": "@pipeline().parameters.adls_folder_unzip",
 																			"type": "Expression"
 																		}
 																	}
@@ -161,12 +139,6 @@
 																		"enablePartitionDiscovery": false
 																	}
 																},
-																"sink": {
-																	"type": "BinarySink",
-																	"storeSettings": {
-																		"type": "AzureBlobFSWriteSettings"
-																	}
-																},
 																"enableStaging": true,
 																"stagingSettings": {
 																	"linkedServiceName": {
@@ -195,22 +167,6 @@
 																		},
 																		"sheet_name": {
 																			"value": "@item().sheet",
-																			"type": "Expression"
-																		}
-																	}
-																}
-															],
-															"outputs": [
-																{
-																	"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
-																	"type": "DatasetReference",
-																	"parameters": {
-																		"container_name": {
-																			"value": "@pipeline().parameters.adls_container_unzip",
-																			"type": "Expression"
-																		},
-																		"folder_name": {
-																			"value": "@pipeline().parameters.adls_folder_unzip",
 																			"type": "Expression"
 																		}
 																	}
@@ -246,12 +202,6 @@
 																		"type": "DelimitedTextReadSettings"
 																	}
 																},
-																"sink": {
-																	"type": "BinarySink",
-																	"storeSettings": {
-																		"type": "AzureBlobFSWriteSettings"
-																	}
-																},
 																"enableStaging": true
 															},
 															"inputs": [
@@ -269,22 +219,6 @@
 																		},
 																		"file": {
 																			"value": "@item().adls_file",
-																			"type": "Expression"
-																		}
-																	}
-																}
-															],
-															"outputs": [
-																{
-																	"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
-																	"type": "DatasetReference",
-																	"parameters": {
-																		"container_name": {
-																			"value": "@pipeline().parameters.adls_container_unzip",
-																			"type": "Expression"
-																		},
-																		"folder_name": {
-																			"value": "@pipeline().parameters.adls_folder_unzip\n",
 																			"type": "Expression"
 																		}
 																	}
