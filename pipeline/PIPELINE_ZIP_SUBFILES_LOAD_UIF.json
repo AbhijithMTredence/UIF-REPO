@@ -129,100 +129,7 @@
 										"value": "EXCEL",
 										"activities": [
 											{
-												"name": "COPY_CSV_SNOWFLAKE",
-												"type": "Copy",
-												"dependsOn": [
-													{
-														"activity": "COPY_EXCEL_TO_CSV",
-														"dependencyConditions": [
-															"Succeeded"
-														]
-													},
-													{
-														"activity": "GENERATE_TABLE1",
-														"dependencyConditions": [
-															"Succeeded"
-														]
-													}
-												],
-												"policy": {
-													"timeout": "7.00:00:00",
-													"retry": 0,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"source": {
-														"type": "DelimitedTextSource",
-														"storeSettings": {
-															"type": "AzureBlobFSReadSettings",
-															"recursive": true,
-															"enablePartitionDiscovery": false
-														},
-														"formatSettings": {
-															"type": "DelimitedTextReadSettings"
-														}
-													},
-													"sink": {
-														"type": "SnowflakeSink",
-														"preCopyScript": {
-															"value": "TRUNCATE TABLE @{item().snowflake_table}",
-															"type": "Expression"
-														},
-														"importSettings": {
-															"type": "SnowflakeImportCopyCommand"
-														}
-													},
-													"enableStaging": true,
-													"stagingSettings": {
-														"linkedServiceName": {
-															"referenceName": "LS_BLOB_STORAGE_UIF",
-															"type": "LinkedServiceReference"
-														},
-														"path": "sf-staging/UIF"
-													}
-												},
-												"inputs": [
-													{
-														"referenceName": "DATASET_ADLS_CSV_FILE_UIF",
-														"type": "DatasetReference",
-														"parameters": {
-															"container_name": {
-																"value": "@concat(pipeline().parameters.adls_container_unzip,'/',pipeline().parameters.adls_folder_unzip)",
-																"type": "Expression"
-															},
-															"folder_name": {
-																"value": "@concat(pipeline().parameters.adls_file_zip,'/',split(pipeline().parameters.adls_file_zip,'.')[0])",
-																"type": "Expression"
-															},
-															"file_name": {
-																"value": "@concat('csv/',replace(item().adls_file,'.xlsx','.csv'))",
-																"type": "Expression"
-															}
-														}
-													}
-												],
-												"outputs": [
-													{
-														"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
-														"type": "DatasetReference",
-														"parameters": {
-															"schema_name": {
-																"value": "@split(item().snowflake_table,'.')[0]",
-																"type": "Expression"
-															},
-															"table_name": {
-																"value": "@split(item().snowflake_table,'.')[1]",
-																"type": "Expression"
-															}
-														}
-													}
-												]
-											},
-											{
-												"name": "COPY_EXCEL_TO_CSV",
+												"name": "COPY_EXCEL_TO_ADLS",
 												"type": "Copy",
 												"dependsOn": [],
 												"policy": {
@@ -243,14 +150,9 @@
 														}
 													},
 													"sink": {
-														"type": "DelimitedTextSink",
+														"type": "BinarySink",
 														"storeSettings": {
-															"type": "AzureBlobFSWriteSettings"
-														},
-														"formatSettings": {
-															"type": "DelimitedTextWriteSettings",
-															"quoteAllText": true,
-															"fileExtension": ".txt"
+															"type": "AzureBlobStorageWriteSettings"
 														}
 													},
 													"enableStaging": true,
@@ -260,14 +162,6 @@
 															"type": "LinkedServiceReference"
 														},
 														"path": "sf-staging/UIF"
-													},
-													"translator": {
-														"type": "TabularTranslator",
-														"typeConversion": true,
-														"typeConversionSettings": {
-															"allowDataTruncation": true,
-															"treatBooleanAsNumber": false
-														}
 													}
 												},
 												"inputs": [
@@ -296,53 +190,20 @@
 												],
 												"outputs": [
 													{
-														"referenceName": "DATASET_ADLS_CSV_FILE_UIF",
+														"referenceName": "DATASET_ADLS_ZIP_BINARY_FOLDER_UIF",
 														"type": "DatasetReference",
 														"parameters": {
 															"container_name": {
-																"value": "@concat(pipeline().parameters.adls_container_unzip,'/',pipeline().parameters.adls_folder_unzip)",
+																"value": "@pipeline().parameters.adls_container_unzip",
 																"type": "Expression"
 															},
 															"folder_name": {
-																"value": "@concat(pipeline().parameters.adls_file_zip,'/',split(pipeline().parameters.adls_file_zip,'.')[0])",
-																"type": "Expression"
-															},
-															"file_name": {
-																"value": "@concat('csv/',replace(item().adls_file,'.xlsx','.csv'))",
+																"value": "@pipeline().parameters.adls_folder_unzip",
 																"type": "Expression"
 															}
 														}
 													}
 												]
-											},
-											{
-												"name": "GENERATE_TABLE1",
-												"type": "Lookup",
-												"dependsOn": [],
-												"policy": {
-													"timeout": "7.00:00:00",
-													"retry": 0,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"source": {
-														"type": "SnowflakeSource",
-														"query": {
-															"value": "CALL staging_gbl.sp_generate_tbl_def(@{concat('''',split(item().snowflake_table,'.')[0],'''')},@{concat('''',split(item().snowflake_table,'.')[1],'''')},@{concat('''',item().table_load,'''')},@{concat('''',item().table_def,'''')},@{pipeline().parameters.flow_key}, @{pipeline().parameters.run_key}, @{pipeline().parameters.job_key})",
-															"type": "Expression"
-														},
-														"exportSettings": {
-															"type": "SnowflakeExportCopyCommand"
-														}
-													},
-													"dataset": {
-														"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-														"type": "DatasetReference"
-													}
-												}
 											}
 										]
 									},
