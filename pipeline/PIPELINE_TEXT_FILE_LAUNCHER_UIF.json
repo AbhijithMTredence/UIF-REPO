@@ -189,7 +189,7 @@
 									"type": "BinarySource",
 									"storeSettings": {
 										"type": "AzureBlobFSReadSettings",
-										"recursive": true,
+										"recursive": false,
 										"wildcardFileName": {
 											"value": "@replace(pipeline().parameters.name,'.txt','*.txt')",
 											"type": "Expression"
