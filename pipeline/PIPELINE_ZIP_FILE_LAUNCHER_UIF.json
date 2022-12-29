@@ -306,6 +306,18 @@
 		"parameters": {
 			"internal_files": {
 				"type": "string"
+			},
+			"adls_folder_unzip": {
+				"type": "string"
+			},
+			"adls_container_zip": {
+				"type": "string"
+			},
+			"adls_container_unzip": {
+				"type": "string"
+			},
+			"adls_file_zip": {
+				"type": "string"
 			}
 		},
 		"variables": {
