@@ -25,7 +25,7 @@
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "COPY_FS_ADLS_CSV_ADLS_copy1",
+									"activity": "COPY_FS_ADLS_CSV_ADLS",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -44,7 +44,7 @@
 									"type": "BinarySource",
 									"storeSettings": {
 										"type": "AzureBlobFSReadSettings",
-										"recursive": true,
+										"recursive": false,
 										"wildcardFileName": {
 											"value": "@replace(pipeline().parameters.name,'.csv','*.csv')",
 											"type": "Expression"
@@ -101,7 +101,7 @@
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "COPY_FS_ADLS_CSV_ADLS_copy1",
+									"activity": "COPY_FS_ADLS_CSV_ADLS",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -120,7 +120,7 @@
 									"type": "BinarySource",
 									"storeSettings": {
 										"type": "AzureBlobFSReadSettings",
-										"recursive": true,
+										"recursive": false,
 										"wildcardFileName": {
 											"value": "@replace(pipeline().parameters.name,'.csv','*.csv')",
 											"type": "Expression"
@@ -173,7 +173,7 @@
 							]
 						},
 						{
-							"name": "COPY_FS_ADLS_CSV_ADLS_copy1",
+							"name": "COPY_FS_ADLS_CSV_ADLS",
 							"type": "Copy",
 							"dependsOn": [],
 							"policy": {
