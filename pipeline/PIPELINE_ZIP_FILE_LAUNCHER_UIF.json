@@ -1,5 +1,5 @@
 {
-	"name": "pipeline1",
+	"name": "PIPELINE_ZIP_FILE_LAUNCHER_UIF",
 	"properties": {
 		"activities": [
 			{
