@@ -478,6 +478,9 @@
 			},
 			"job_start": {
 				"type": "String"
+			},
+			"count": {
+				"type": "String"
 			}
 		},
 		"folder": {
