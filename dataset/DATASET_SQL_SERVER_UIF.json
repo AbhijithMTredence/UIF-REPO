@@ -1,10 +1,6 @@
 {
 	"name": "DATASET_SQL_SERVER_UIF",
 	"properties": {
-		"linkedServiceName": {
-			"referenceName": "LS_MDS_UIF",
-			"type": "LinkedServiceReference"
-		},
 		"parameters": {
 			"database": {
 				"type": "string"
