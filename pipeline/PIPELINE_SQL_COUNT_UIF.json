@@ -131,6 +131,162 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "If SQL Query is Used",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.query,'')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "COPY_TO_ADLS_QRY",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "SELECT * FROM (@{pipeline().parameters.query}) WHERE @{variables('delta_condition')}",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": true,
+								"stagingSettings": {
+									"linkedServiceName": {
+										"referenceName": "LS_BLOB_STORAGE_UIF",
+										"type": "LinkedServiceReference"
+									},
+									"path": "sf-staging/UIF"
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DATASET_SQL_SERVER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"database": {
+											"value": "@split(pipeline().parameters.source_table,'.')[0]",
+											"type": "Expression"
+										},
+										"table_name": {
+											"value": "@split(pipeline().parameters.source_table,'.')[1]",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.container",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@pipeline().parameters.folder",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "COPY_TO_ADLS_TBL",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "SELECT * FROM @{pipeline().parameters.source_table} WHERE @{variables('delta_condition')}",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": true,
+								"stagingSettings": {
+									"linkedServiceName": {
+										"referenceName": "LS_BLOB_STORAGE_UIF",
+										"type": "LinkedServiceReference"
+									},
+									"path": "sf-staging/UIF"
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DATASET_SQL_SERVER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"database": {
+											"value": "@split(pipeline().parameters.source_table,'.')[0]",
+											"type": "Expression"
+										},
+										"table_name": {
+											"value": "@split(pipeline().parameters.source_table,'.')[1]",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.container",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@pipeline().parameters.folder",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		],
 		"parameters": {
