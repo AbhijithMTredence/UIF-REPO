@@ -26,10 +26,6 @@
 							"dependsOn": [],
 							"userProperties": [],
 							"typeProperties": {
-								"pipeline": {
-									"referenceName": "PIPELINE_RUN_SNOWFLAKE_SP_UIF",
-									"type": "PipelineReference"
-								},
 								"waitOnCompletion": true,
 								"parameters": {
 									"schema_name": "STAGING_GBL",
@@ -209,10 +205,6 @@
 				],
 				"userProperties": [],
 				"typeProperties": {
-					"pipeline": {
-						"referenceName": "PIPELINE_SEND_STATUS_MAIL_UIF",
-						"type": "PipelineReference"
-					},
 					"waitOnCompletion": true,
 					"parameters": {
 						"BODY_CONTENT": {
@@ -272,10 +264,6 @@
 				],
 				"userProperties": [],
 				"typeProperties": {
-					"pipeline": {
-						"referenceName": "PIPELINE_SEND_STATUS_MAIL_UIF",
-						"type": "PipelineReference"
-					},
 					"waitOnCompletion": true,
 					"parameters": {
 						"BODY_CONTENT": {
