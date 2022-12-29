@@ -73,7 +73,7 @@
 					],
 					"ifTrueActivities": [
 						{
-							"name": "COPY_TO_SNOWFLAKE_TBL",
+							"name": "COPY_TO_ADLS_TBL",
 							"type": "Copy",
 							"dependsOn": [],
 							"policy": {
