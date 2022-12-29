@@ -377,7 +377,7 @@
 							}
 						},
 						{
-							"name": "Execute Pipeline1",
+							"name": "MANAGE_FILES",
 							"type": "ExecutePipeline",
 							"dependsOn": [
 								{
@@ -390,7 +390,7 @@
 							"userProperties": [],
 							"typeProperties": {
 								"pipeline": {
-									"referenceName": "pipeline1",
+									"referenceName": "PIPELINE_ZIP_FILE_LAUNCHER_UIF",
 									"type": "PipelineReference"
 								},
 								"waitOnCompletion": true
