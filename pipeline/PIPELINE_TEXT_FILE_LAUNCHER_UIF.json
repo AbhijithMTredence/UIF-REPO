@@ -19,64 +19,6 @@
 						"value": "@greaterOrEquals(int(variables('count')),1)",
 						"type": "Expression"
 					},
-					"ifFalseActivities": [
-						{
-							"name": "ALERT_FILE_MISSING",
-							"type": "ExecutePipeline",
-							"dependsOn": [],
-							"userProperties": [],
-							"typeProperties": {
-								"pipeline": {
-									"referenceName": "PIPELINE_SEND_STATUS_MAIL_UIF",
-									"type": "PipelineReference"
-								},
-								"waitOnCompletion": true,
-								"parameters": {
-									"BODY_CONTENT": {
-										"value": "LATEST TEXT FILE MISSING - @{pipeline().parameters.name}",
-										"type": "Expression"
-									},
-									"SUBJECT": {
-										"value": "RGM_Update : (@{pipeline().globalParameters.env}) RGM MASTER PIPELINE UPDATED AT @{utcnow()} UTC ",
-										"type": "Expression"
-									}
-								}
-							}
-						},
-						{
-							"name": "ACTIVITY_LOG",
-							"type": "Lookup",
-							"dependsOn": [
-								{
-									"activity": "ALERT_FILE_MISSING",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "7.00:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"source": {
-									"type": "SnowflakeSource",
-									"query": {
-										"value": "CALL STAGING_GBL.SP_ACTIVITY_LOG(21,'@{pipeline().parameters.name}','FILE MISSING',@{pipeline().parameters.run_key},@{pipeline().parameters.job_key},@{pipeline().parameters.flow_key})",
-										"type": "Expression"
-									},
-									"exportSettings": {
-										"type": "SnowflakeExportCopyCommand"
-									}
-								},
-								"firstRowOnly": false
-							}
-						}
-					],
 					"ifTrueActivities": [
 						{
 							"name": "COPY_ADLS_TEXT_ADLS",
@@ -95,7 +37,7 @@
 									"type": "BinarySource",
 									"storeSettings": {
 										"type": "AzureBlobFSReadSettings",
-										"recursive": true,
+										"recursive": false,
 										"wildcardFileName": {
 											"value": "@concat(split(pipeline().parameters.name, '.')[0],'*')",
 											"type": "Expression"
@@ -171,9 +113,9 @@
 									"type": "BinarySource",
 									"storeSettings": {
 										"type": "AzureBlobFSReadSettings",
-										"recursive": true,
+										"recursive": false,
 										"wildcardFileName": {
-											"value": "@replace(pipeline().parameters.name,'.text','*.text')",
+											"value": "@replace(pipeline().parameters.name,'.txt','*.txt')",
 											"type": "Expression"
 										},
 										"deleteFilesAfterCompletion": false
@@ -249,7 +191,7 @@
 										"type": "AzureBlobFSReadSettings",
 										"recursive": true,
 										"wildcardFileName": {
-											"value": "@replace(pipeline().parameters.name,'.text','*.text')",
+											"value": "@replace(pipeline().parameters.name,'.txt','*.txt')",
 											"type": "Expression"
 										},
 										"deleteFilesAfterCompletion": false
