@@ -25,7 +25,7 @@
 					"source": {
 						"type": "BinarySource",
 						"storeSettings": {
-							"type": "AzureBlobStorageReadSettings",
+							"type": "AzureBlobFSReadSettings",
 							"recursive": true,
 							"wildcardFileName": {
 								"value": "@replace(pipeline().parameters.adls_file_zip,'.zip','*.zip')",
@@ -33,10 +33,7 @@
 							}
 						},
 						"formatSettings": {
-							"type": "BinaryReadSettings",
-							"compressionProperties": {
-								"type": "ZipDeflateReadSettings"
-							}
+							"type": "BinaryReadSettings"
 						}
 					},
 					"sink": {
@@ -49,11 +46,11 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "DATASET_ADLS_ZIP_BINARY_FOLDER_UIF",
+						"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
 						"type": "DatasetReference",
 						"parameters": {
 							"container_name": {
-								"value": "@pipeline().parameters.adls_container_zip",
+								"value": "@pipeline().parameters.adls_container_unzip",
 								"type": "Expression"
 							},
 							"folder_name": {
@@ -169,13 +166,12 @@
 					"source": {
 						"type": "BinarySource",
 						"storeSettings": {
-							"type": "FileServerReadSettings",
+							"type": "AzureBlobFSReadSettings",
 							"recursive": true,
 							"wildcardFileName": {
 								"value": "@replace(pipeline().parameters.fs_zip_file_name,'.zip','*.zip')",
 								"type": "Expression"
-							},
-							"deleteFilesAfterCompletion": false
+							}
 						},
 						"formatSettings": {
 							"type": "BinaryReadSettings"
@@ -198,11 +194,15 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "DATASET_FILE_SYSTEM_BINARY_FOLDER_UIF",
+						"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
 						"type": "DatasetReference",
 						"parameters": {
+							"container_name": {
+								"value": "@pipeline().parameters.adls_container_unzip",
+								"type": "Expression"
+							},
 							"folder_name": {
-								"value": "@pipeline().parameters.fs_folder_path_zip",
+								"value": "@pipeline().parameters.adls_folder_unzip",
 								"type": "Expression"
 							}
 						}
