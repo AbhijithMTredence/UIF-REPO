@@ -34,6 +34,7 @@
 					],
 					"storeSettings": {
 						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
 						"enablePartitionDiscovery": false
 					},
 					"formatSettings": {
@@ -83,65 +84,360 @@
 					},
 					"ifTrueActivities": [
 						{
-							"name": "CALL_JOB",
-							"type": "ExecutePipeline",
-							"dependsOn": [],
+							"name": "UNZIP_FILES",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "ARCHIVE_ZIPS",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
 							"userProperties": [],
 							"typeProperties": {
-								"pipeline": {
-									"referenceName": "PIPELINE_ZIP_JOB_START_UIF",
-									"type": "PipelineReference"
-								},
-								"waitOnCompletion": true,
-								"parameters": {
-									"fs_folder_path_zip": {
-										"value": "@pipeline().parameters.fs_folder_path_zip",
-										"type": "Expression"
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"wildcardFileName": {
+											"value": "@replace(pipeline().parameters.adls_file_zip,'.zip','*.zip')",
+											"type": "Expression"
+										}
 									},
-									"fs_zip_file_name": {
-										"value": "@pipeline().parameters.fs_zip_file_name",
-										"type": "Expression"
-									},
-									"adls_container_zip": {
-										"value": "@pipeline().parameters.adls_container_zip",
-										"type": "Expression"
-									},
-									"adls_folder_zip": {
-										"value": "@pipeline().parameters.adls_folder_zip",
-										"type": "Expression"
-									},
-									"adls_file_zip": {
-										"value": "@pipeline().parameters.adls_file_zip",
-										"type": "Expression"
-									},
-									"adls_container_unzip": {
-										"value": "@pipeline().parameters.adls_container_unzip",
-										"type": "Expression"
-									},
-									"adls_folder_unzip": {
-										"value": "@pipeline().parameters.adls_container_unzip",
-										"type": "Expression"
-									},
-									"internal_files": {
-										"value": "@pipeline().parameters.internal_files",
-										"type": "Expression"
-									},
-									"flow_key": {
-										"value": "@pipeline().parameters.flow_key",
-										"type": "Expression"
-									},
-									"run_key": {
-										"value": "@pipeline().parameters.run_key",
-										"type": "Expression"
-									},
-									"job_key": {
-										"value": "@pipeline().parameters.job_key",
-										"type": "Expression"
-									},
-									"object_name": {
-										"value": "@pipeline().parameters.object_name",
-										"type": "Expression"
+									"formatSettings": {
+										"type": "BinaryReadSettings"
 									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container_unzip",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@pipeline().parameters.adls_folder_zip",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container_unzip",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@pipeline().parameters.adls_folder_unzip",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "ARCHIVE_ZIPS",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "COPY_ZIPS_FS",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"wildcardFileName": {
+											"value": "@replace(pipeline().parameters.adls_file_zip,'.zip','*.zip')",
+											"type": "Expression"
+										},
+										"deleteFilesAfterCompletion": false
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container_zip",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@pipeline().parameters.adls_folder_zip",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container_zip",
+											"type": "Expression"
+										},
+										"folder_name": "zip_files/archive_zips"
+									}
+								}
+							]
+						},
+						{
+							"name": "COPY_ZIPS_FS",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"wildcardFileName": {
+											"value": "@replace(pipeline().parameters.fs_zip_file_name,'.zip','*.zip')",
+											"type": "Expression"
+										}
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": true,
+								"stagingSettings": {
+									"linkedServiceName": {
+										"referenceName": "LS_BLOB_STORAGE_UIF",
+										"type": "LinkedServiceReference"
+									},
+									"path": "sf-staging/UIF"
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container_unzip",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@pipeline().parameters.adls_folder_unzip",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container_zip",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@pipeline().parameters.adls_folder_zip",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "UNZIP_FILE_LIST",
+							"type": "GetMetadata",
+							"dependsOn": [
+								{
+									"activity": "UNZIP_FILES",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container_zip",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@pipeline().parameters.adls_folder_zip",
+											"type": "Expression"
+										}
+									}
+								},
+								"fieldList": [
+									"childItems"
+								],
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							}
+						},
+						{
+							"name": "ForEach1",
+							"type": "ForEach",
+							"dependsOn": [
+								{
+									"activity": "UNZIP_FILE_FILTER",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"items": {
+									"value": "@activity('UNZIP_FILE_FILTER').output.Value",
+									"type": "Expression"
+								},
+								"isSequential": true,
+								"activities": [
+									{
+										"name": "MANAGE_FILES",
+										"type": "ExecutePipeline",
+										"dependsOn": [],
+										"userProperties": [],
+										"typeProperties": {
+											"pipeline": {
+												"referenceName": "PIPELINE_ZIP_SUBFILES_LOAD_UIF",
+												"type": "PipelineReference"
+											},
+											"waitOnCompletion": true,
+											"parameters": {
+												"internal_files": {
+													"value": "@pipeline().parameters.internal_files",
+													"type": "Expression"
+												},
+												"adls_file_zip": {
+													"value": "@item().name",
+													"type": "Expression"
+												},
+												"adls_container_unzip": {
+													"value": "@pipeline().parameters.adls_container_unzip",
+													"type": "Expression"
+												},
+												"adls_folder_unzip": {
+													"value": "@pipeline().parameters.adls_folder_unzip",
+													"type": "Expression"
+												},
+												"flow_key": {
+													"value": "@pipeline().parameters.flow_key",
+													"type": "Expression"
+												},
+												"run_key": {
+													"value": "@pipeline().parameters.run_key",
+													"type": "Expression"
+												},
+												"job_key": {
+													"value": "@pipeline().parameters.job_key",
+													"type": "Expression"
+												}
+											}
+										}
+									}
+								]
+							}
+						},
+						{
+							"name": "UNZIP_FILE_FILTER",
+							"type": "Filter",
+							"dependsOn": [
+								{
+									"activity": "UNZIP_FILE_LIST",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"items": {
+									"value": "@activity('UNZIP_FILE_LIST').output.childItems",
+									"type": "Expression"
+								},
+								"condition": {
+									"value": "@contains(item().name, replace(pipeline().parameters.fs_zip_file_name,'.zip',''))",
+									"type": "Expression"
 								}
 							}
 						}
