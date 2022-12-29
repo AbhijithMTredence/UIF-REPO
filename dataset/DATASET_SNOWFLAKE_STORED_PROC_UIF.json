@@ -1,10 +1,6 @@
 {
 	"name": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
 	"properties": {
-		"linkedServiceName": {
-			"referenceName": "LS_SNOWFLAKE_UIF",
-			"type": "LinkedServiceReference"
-		},
 		"folder": {
 			"name": "SNOWFLAKE/STORED_PROCEDURE"
 		},

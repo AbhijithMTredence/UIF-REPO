@@ -1,10 +1,6 @@
 {
 	"name": "DATASET_FILE_SYSTEM_BINARY_FOLDER_UIF",
 	"properties": {
-		"linkedServiceName": {
-			"referenceName": "LS_FILE_SYSTEM_UIF",
-			"type": "LinkedServiceReference"
-		},
 		"parameters": {
 			"folder_name": {
 				"type": "string"
