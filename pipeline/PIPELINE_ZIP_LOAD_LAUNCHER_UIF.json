@@ -5,14 +5,7 @@
 			{
 				"name": "READ_JSON",
 				"type": "Lookup",
-				"dependsOn": [
-					{
-						"activity": "COPY_ZIP_CONFIG_FS",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"dependsOn": [],
 				"policy": {
 					"timeout": "7.00:00:00",
 					"retry": 0,
@@ -155,72 +148,6 @@
 						}
 					]
 				}
-			},
-			{
-				"name": "COPY_ZIP_CONFIG_FS",
-				"type": "Copy",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "7.00:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "BinarySource",
-						"storeSettings": {
-							"type": "FileServerReadSettings",
-							"recursive": true
-						},
-						"formatSettings": {
-							"type": "BinaryReadSettings"
-						}
-					},
-					"sink": {
-						"type": "BinarySink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings"
-						}
-					},
-					"enableStaging": true,
-					"stagingSettings": {
-						"linkedServiceName": {
-							"referenceName": "LS_BLOB_STORAGE_UIF",
-							"type": "LinkedServiceReference"
-						},
-						"path": "sf-staging/UIF"
-					}
-				},
-				"inputs": [
-					{
-						"referenceName": "DATASET_FILE_SYSTEM_BINARY_FILE_UIF",
-						"type": "DatasetReference",
-						"parameters": {
-							"folder_name": {
-								"value": "@replace('Corporate//RGM//UIL//RGM_GBL//DRIVERS//env//CONFIG//FILE_MOVEMENT','env',pipeline().globalParameters.env)",
-								"type": "Expression"
-							},
-							"file_name": "config_execution_zip_load.json"
-						}
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "DATASET_ADLS_BINARY_FILE_UIF",
-						"type": "DatasetReference",
-						"parameters": {
-							"container_name": {
-								"value": "drivers/@{toLower(pipeline().globalParameters.env)}",
-								"type": "Expression"
-							},
-							"folder_name": "config/file_movement",
-							"file_name": "config_execution_zip_load.json"
-						}
-					}
-				]
 			}
 		],
 		"parameters": {
