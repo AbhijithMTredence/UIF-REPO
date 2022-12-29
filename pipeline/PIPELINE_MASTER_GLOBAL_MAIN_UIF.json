@@ -3,206 +3,34 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "CHECK_RUN_PROGRESS",
-				"type": "IfCondition",
+				"name": "LOAD_FILES",
+				"type": "ExecutePipeline",
 				"dependsOn": [],
 				"userProperties": [],
 				"typeProperties": {
-					"expression": {
-						"value": "@not(equals(activity('RUN_START').output.firstRow.SP_RUN_START, 0))",
-						"type": "Expression"
+					"pipeline": {
+						"referenceName": "PIPELINE_MASTER_GLOBAL_UIF",
+						"type": "PipelineReference"
 					},
-					"ifTrueActivities": [
-						{
-							"name": "LOAD_FILES",
-							"type": "ExecutePipeline",
-							"dependsOn": [
-								{
-									"activity": "START_NOTIFICATION",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								},
-								{
-									"activity": "JOB_IDS",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"userProperties": [],
-							"typeProperties": {
-								"pipeline": {
-									"referenceName": "PIPELINE_MASTER_GLOBAL_UIF",
-									"type": "PipelineReference"
-								},
-								"waitOnCompletion": true,
-								"parameters": {
-									"flow_key": {
-										"value": "@pipeline().parameters.flow_key",
-										"type": "Expression"
-									},
-									"run_key": {
-										"value": "@variables('run_key')",
-										"type": "Expression"
-									},
-									"load_type": {
-										"value": "@pipeline().parameters.load_type",
-										"type": "Expression"
-									},
-									"Jobs": {
-										"value": "@variables('Jobs')",
-										"type": "Expression"
-									}
-								}
-							}
+					"waitOnCompletion": true,
+					"parameters": {
+						"flow_key": {
+							"value": "@pipeline().parameters.flow_key",
+							"type": "Expression"
 						},
-						{
-							"name": "SET_RUN_KEY",
-							"type": "SetVariable",
-							"dependsOn": [],
-							"userProperties": [],
-							"typeProperties": {
-								"variableName": "run_key",
-								"value": {
-									"value": "@string(activity('RUN_START').output.firstRow.SP_RUN_START)",
-									"type": "Expression"
-								}
-							}
+						"run_key": {
+							"value": "@variables('run_key')",
+							"type": "Expression"
 						},
-						{
-							"name": "START_NOTIFICATION",
-							"type": "ExecutePipeline",
-							"dependsOn": [
-								{
-									"activity": "SET_RUN_KEY",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"userProperties": [],
-							"typeProperties": {
-								"pipeline": {
-									"referenceName": "PIPELINE_SEND_STATUS_MAIL_UIF",
-									"type": "PipelineReference"
-								},
-								"waitOnCompletion": true,
-								"parameters": {
-									"BODY_CONTENT": {
-										"value": "RGM MASTER PIPELINE STARTED FOR RUN ID - @{variables('run_key')} AT @{utcnow()} UTC - LOAD TYPE - @{pipeline().parameters.load_type}",
-										"type": "Expression"
-									},
-									"SUBJECT": {
-										"value": "RGM_Update : (@{pipeline().globalParameters.env}) RGM MASTER PIPELINE STATUS",
-										"type": "Expression"
-									}
-								}
-							}
+						"load_type": {
+							"value": "@pipeline().parameters.load_type",
+							"type": "Expression"
 						},
-						{
-							"name": "JOB_MAPPING",
-							"type": "Lookup",
-							"dependsOn": [
-								{
-									"activity": "SET_RUN_KEY",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "7.00:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"source": {
-									"type": "SnowflakeSource",
-									"query": {
-										"value": "CALL STAGING_GBL.SP_LOAD_SCHEDULE_JOB_MAPPING(@{pipeline().parameters.flow_key},@{variables('run_key')});",
-										"type": "Expression"
-									},
-									"exportSettings": {
-										"type": "SnowflakeExportCopyCommand"
-									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
-									"type": "DatasetReference",
-									"parameters": {
-										"schema_name": "STAGING_GBL",
-										"table_name": "SCHEDULE_JOB_MAPPING"
-									}
-								},
-								"firstRowOnly": false
-							}
-						},
-						{
-							"name": "GET_JOB_LIST",
-							"type": "Lookup",
-							"dependsOn": [
-								{
-									"activity": "JOB_MAPPING",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "7.00:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"source": {
-									"type": "SnowflakeSource",
-									"query": {
-										"value": "CALL RGM_SALES_GBL.STAGING_GBL.SP_GET_JOB_LIST_BY_RUN(@{pipeline().parameters.flow_key},@{variables('run_key')});",
-										"type": "Expression"
-									},
-									"exportSettings": {
-										"type": "SnowflakeExportCopyCommand"
-									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
-									"type": "DatasetReference",
-									"parameters": {
-										"schema_name": "STAGING_GBL",
-										"table_name": "SCHEDULE_JOB_MAPPING"
-									}
-								},
-								"firstRowOnly": false
-							}
-						},
-						{
-							"name": "JOB_IDS",
-							"type": "SetVariable",
-							"dependsOn": [
-								{
-									"activity": "GET_JOB_LIST",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"userProperties": [],
-							"typeProperties": {
-								"variableName": "Jobs",
-								"value": {
-									"value": "@activity('GET_JOB_LIST').output.value[0].SP_GET_JOB_LIST_BY_RUN",
-									"type": "Expression"
-								}
-							}
+						"Jobs": {
+							"value": "@variables('Jobs')",
+							"type": "Expression"
 						}
-					]
+					}
 				}
 			}
 		],
