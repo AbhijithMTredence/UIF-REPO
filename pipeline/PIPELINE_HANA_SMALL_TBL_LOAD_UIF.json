@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "If Condition1",
+				"name": "If SQL Query is Used",
 				"type": "IfCondition",
 				"dependsOn": [],
 				"userProperties": [],
@@ -35,13 +35,9 @@
 									"partitionOption": "None"
 								},
 								"sink": {
-									"type": "SnowflakeSink",
-									"preCopyScript": {
-										"value": "TRUNCATE TABLE @{pipeline().parameters.snowflake_table}",
-										"type": "Expression"
-									},
-									"importSettings": {
-										"type": "SnowflakeImportCopyCommand"
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
 									}
 								},
 								"enableStaging": true,
@@ -52,7 +48,23 @@
 									},
 									"path": "sf-staging/UIF"
 								}
-							}
+							},
+							"outputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.container",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@pipeline().parameters.folder",
+											"type": "Expression"
+										}
+									}
+								}
+							]
 						}
 					],
 					"ifTrueActivities": [
