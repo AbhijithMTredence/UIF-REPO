@@ -5,14 +5,7 @@
 			{
 				"name": "CHECK_COUNT_AND_FILTER",
 				"type": "IfCondition",
-				"dependsOn": [
-					{
-						"activity": "GET_COUNT",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"dependsOn": [],
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
@@ -129,110 +122,6 @@
 										"value": "@pipeline().parameters.job_key",
 										"type": "Expression"
 									}
-								}
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "GET_COUNT",
-				"type": "IfCondition",
-				"dependsOn": [],
-				"userProperties": [],
-				"typeProperties": {
-					"expression": {
-						"value": "@equals(pipeline().parameters.query,'')",
-						"type": "Expression"
-					},
-					"ifFalseActivities": [
-						{
-							"name": "GET_COUNT_SRC_QRY",
-							"type": "Lookup",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "7.00:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"source": {
-									"type": "SapHanaSource",
-									"query": {
-										"value": "SELECT COUNT(*) AS TOTAL_RECORDS FROM (@{pipeline().parameters.query})",
-										"type": "Expression"
-									},
-									"partitionOption": "None"
-								},
-								"firstRowOnly": false
-							}
-						},
-						{
-							"name": "Set variable",
-							"type": "SetVariable",
-							"dependsOn": [
-								{
-									"activity": "GET_COUNT_SRC_QRY",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"userProperties": [],
-							"typeProperties": {
-								"variableName": "TOTAL_RECORDS",
-								"value": {
-									"value": "@string(activity('GET_COUNT_SRC_QRY').output.value[0].TOTAL_RECORDS)",
-									"type": "Expression"
-								}
-							}
-						}
-					],
-					"ifTrueActivities": [
-						{
-							"name": "GET_COUNT_SRC",
-							"type": "Lookup",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "7.00:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"source": {
-									"type": "SapHanaSource",
-									"query": {
-										"value": "SELECT COUNT(*) AS TOTAL_RECORDS FROM @{pipeline().parameters.source_table}",
-										"type": "Expression"
-									},
-									"partitionOption": "None"
-								},
-								"firstRowOnly": false
-							}
-						},
-						{
-							"name": "Set variable1",
-							"type": "SetVariable",
-							"dependsOn": [
-								{
-									"activity": "GET_COUNT_SRC",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"userProperties": [],
-							"typeProperties": {
-								"variableName": "TOTAL_RECORDS",
-								"value": {
-									"value": "@string(activity('GET_COUNT_SRC').output.value[0].TOTAL_RECORDS)",
-									"type": "Expression"
 								}
 							}
 						}
