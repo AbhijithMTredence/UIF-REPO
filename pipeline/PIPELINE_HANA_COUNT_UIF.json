@@ -110,11 +110,11 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"container_name": {
-											"value": "@pipeline().parameters.container",
+											"value": "@pipeline().parameters.adls_container",
 											"type": "Expression"
 										},
 										"folder_name": {
-											"value": "@pipeline().parameters.folder",
+											"value": "@pipeline().parameters.adls_folder",
 											"type": "Expression"
 										}
 									}
