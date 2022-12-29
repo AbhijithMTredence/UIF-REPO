@@ -303,6 +303,16 @@
 				}
 			}
 		],
+		"parameters": {
+			"internal_files": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"files": {
+				"type": "String"
+			}
+		},
 		"annotations": []
 	}
 }
