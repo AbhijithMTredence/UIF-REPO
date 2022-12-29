@@ -3,179 +3,9 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "CHECK_DELTA",
-				"type": "IfCondition",
-				"dependsOn": [],
-				"userProperties": [],
-				"typeProperties": {
-					"expression": {
-						"value": "@equals(pipeline().parameters.if_delta,'1')",
-						"type": "Expression"
-					},
-					"ifFalseActivities": [
-						{
-							"name": "NO_DELTA_CONDITION",
-							"type": "SetVariable",
-							"dependsOn": [],
-							"userProperties": [],
-							"typeProperties": {
-								"variableName": "delta_condition",
-								"value": "1=1"
-							}
-						}
-					],
-					"ifTrueActivities": [
-						{
-							"name": "GET_DELTA_CONDITION",
-							"type": "Lookup",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "7.00:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"source": {
-									"type": "SnowflakeSource",
-									"query": {
-										"value": "CALL STAGING_GBL.SP_GET_STAGE_DELTA_CONDITION('@{pipeline().parameters.source_table}', 'DELTA', @{pipeline().parameters.run_key}, @{pipeline().parameters.job_key}, '@{pipeline().parameters.snowflake_table}')",
-										"type": "Expression"
-									},
-									"exportSettings": {
-										"type": "SnowflakeExportCopyCommand"
-									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-									"type": "DatasetReference"
-								},
-								"firstRowOnly": false
-							}
-						},
-						{
-							"name": "DELTA_CONDITION",
-							"type": "SetVariable",
-							"dependsOn": [
-								{
-									"activity": "GET_DELTA_CONDITION",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"userProperties": [],
-							"typeProperties": {
-								"variableName": "delta_condition",
-								"value": {
-									"value": "@{activity('GET_DELTA_CONDITION').output.value[0].SP_GET_STAGE_DELTA_CONDITION}",
-									"type": "Expression"
-								}
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "GENERATE_TABLE",
-				"type": "Lookup",
-				"dependsOn": [
-					{
-						"activity": "CHECK_DELTA",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "7.00:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "SnowflakeSource",
-						"query": {
-							"value": "CALL STAGING_GBL.sp_generate_tbl_def('@{split(pipeline().parameters.snowflake_table,'.')[0]}','@{split(pipeline().parameters.snowflake_table,'.')[1]}','@{pipeline().parameters.target_table_load}','@{pipeline().parameters.snowflake_table_def}',@{pipeline().parameters.flow_key},@{pipeline().parameters.run_key},@{pipeline().parameters.job_key});",
-							"type": "Expression"
-						},
-						"exportSettings": {
-							"type": "SnowflakeExportCopyCommand"
-						}
-					},
-					"dataset": {
-						"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-						"type": "DatasetReference"
-					}
-				}
-			},
-			{
-				"name": "SET_DELTA",
-				"type": "IfCondition",
-				"dependsOn": [
-					{
-						"activity": "If Condition1",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"expression": {
-						"value": "@equals(pipeline().parameters.if_delta,'1')",
-						"type": "Expression"
-					},
-					"ifTrueActivities": [
-						{
-							"name": "SET_DELTA_CONDITION",
-							"type": "Lookup",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "7.00:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"source": {
-									"type": "SnowflakeSource",
-									"query": {
-										"value": "CALL STAGING_GBL.SP_SET_STAGE_DELTA_CONDITION('@{pipeline().parameters.source_table}', @{pipeline().parameters.run_key}, @{pipeline().parameters.job_key}, '@{pipeline().parameters.snowflake_table}')",
-										"type": "Expression"
-									},
-									"exportSettings": {
-										"type": "SnowflakeExportCopyCommand"
-									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-									"type": "DatasetReference"
-								},
-								"firstRowOnly": false
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "If Condition1",
 				"type": "IfCondition",
-				"dependsOn": [
-					{
-						"activity": "GENERATE_TABLE",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"dependsOn": [],
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
@@ -264,13 +94,9 @@
 									"partitionOption": "None"
 								},
 								"sink": {
-									"type": "SnowflakeSink",
-									"preCopyScript": {
-										"value": "TRUNCATE TABLE @{pipeline().parameters.snowflake_table}",
-										"type": "Expression"
-									},
-									"importSettings": {
-										"type": "SnowflakeImportCopyCommand"
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
 									}
 								},
 								"enableStaging": true,
@@ -284,15 +110,15 @@
 							},
 							"outputs": [
 								{
-									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
 									"type": "DatasetReference",
 									"parameters": {
-										"schema_name": {
-											"value": "@split(pipeline().parameters.snowflake_table,'.')[0]",
+										"container_name": {
+											"value": "@pipeline().parameters.container",
 											"type": "Expression"
 										},
-										"table_name": {
-											"value": "@split(pipeline().parameters.snowflake_table,'.')[1]",
+										"folder_name": {
+											"value": "@pipeline().parameters.folder",
 											"type": "Expression"
 										}
 									}
@@ -329,6 +155,12 @@
 				"type": "string"
 			},
 			"query": {
+				"type": "string"
+			},
+			"container": {
+				"type": "string"
+			},
+			"folder": {
 				"type": "string"
 			}
 		},
