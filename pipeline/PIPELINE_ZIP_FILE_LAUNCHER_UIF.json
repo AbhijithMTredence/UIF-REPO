@@ -202,7 +202,13 @@
 																		"type": "DelimitedTextReadSettings"
 																	}
 																},
-																"enableStaging": true
+																"enableStaging": true,
+																"stagingSettings": {
+																	"linkedServiceName": {
+																		"referenceName": "LS_BLOB_STORAGE_UIF",
+																		"type": "LinkedServiceReference"
+																	}
+																}
 															},
 															"inputs": [
 																{
