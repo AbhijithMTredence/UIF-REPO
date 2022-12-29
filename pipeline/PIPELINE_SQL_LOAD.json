@@ -173,10 +173,6 @@
 							],
 							"userProperties": [],
 							"typeProperties": {
-								"pipeline": {
-									"referenceName": "PIPELINE_SEND_ERRORLOG_RESULTS_UIF",
-									"type": "PipelineReference"
-								},
 								"waitOnCompletion": true,
 								"parameters": {
 									"BODY_CONTENT": {
@@ -480,10 +476,6 @@
 									],
 									"userProperties": [],
 									"typeProperties": {
-										"pipeline": {
-											"referenceName": "PIPELINE_SEND_ERRORLOG_RESULTS_UIF",
-											"type": "PipelineReference"
-										},
 										"waitOnCompletion": true,
 										"parameters": {
 											"BODY_CONTENT": {
