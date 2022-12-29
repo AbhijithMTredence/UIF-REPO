@@ -354,7 +354,7 @@
 							}
 						},
 						{
-							"name": "ForEach1",
+							"name": "ForEach_ZIP",
 							"type": "ForEach",
 							"dependsOn": [
 								{
