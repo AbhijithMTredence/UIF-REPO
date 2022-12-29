@@ -99,10 +99,6 @@
 						"exportSettings": {
 							"type": "SnowflakeExportCopyCommand"
 						}
-					},
-					"dataset": {
-						"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-						"type": "DatasetReference"
 					}
 				}
 			},
@@ -146,10 +142,6 @@
 									"exportSettings": {
 										"type": "SnowflakeExportCopyCommand"
 									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-									"type": "DatasetReference"
 								}
 							}
 						}
@@ -265,10 +257,6 @@
 									"exportSettings": {
 										"type": "SnowflakeExportCopyCommand"
 									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-									"type": "DatasetReference"
 								}
 							}
 						}
@@ -315,10 +303,6 @@
 									"exportSettings": {
 										"type": "SnowflakeExportCopyCommand"
 									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-									"type": "DatasetReference"
 								}
 							}
 						}
@@ -365,10 +349,6 @@
 									"exportSettings": {
 										"type": "SnowflakeExportCopyCommand"
 									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-									"type": "DatasetReference"
 								}
 							}
 						}
@@ -432,14 +412,6 @@
 							"type": "SnowflakeExportCopyCommand"
 						}
 					},
-					"dataset": {
-						"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
-						"type": "DatasetReference",
-						"parameters": {
-							"schema_name": "STAGING_GBL",
-							"table_name": "PARALLEL_SP_EXEC_MERGE"
-						}
-					},
 					"firstRowOnly": false
 				}
 			},
@@ -483,10 +455,6 @@
 									"exportSettings": {
 										"type": "SnowflakeExportCopyCommand"
 									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-									"type": "DatasetReference"
 								}
 							}
 						}
@@ -608,10 +576,6 @@
 									"exportSettings": {
 										"type": "SnowflakeExportCopyCommand"
 									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-									"type": "DatasetReference"
 								}
 							}
 						}
@@ -681,10 +645,6 @@
 									"exportSettings": {
 										"type": "SnowflakeExportCopyCommand"
 									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-									"type": "DatasetReference"
 								}
 							}
 						}

@@ -256,10 +256,6 @@
 							"type": "SnowflakeExportCopyCommand"
 						}
 					},
-					"dataset": {
-						"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-						"type": "DatasetReference"
-					},
 					"firstRowOnly": true
 				}
 			},

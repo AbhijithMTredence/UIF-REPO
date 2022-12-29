@@ -95,14 +95,7 @@
 										"type": "SnowflakeImportCopyCommand"
 									}
 								},
-								"enableStaging": true,
-								"stagingSettings": {
-									"linkedServiceName": {
-										"referenceName": "BLOB_SAS",
-										"type": "LinkedServiceReference"
-									},
-									"path": "sf-staging"
-								}
+								"enableStaging": true
 							},
 							"inputs": [
 								{
@@ -115,22 +108,6 @@
 										},
 										"folder_name": {
 											"value": "@pipeline().parameters.adls_folder",
-											"type": "Expression"
-										}
-									}
-								}
-							],
-							"outputs": [
-								{
-									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
-									"type": "DatasetReference",
-									"parameters": {
-										"schema_name": {
-											"value": "@pipeline().parameters.target_table_schema",
-											"type": "Expression"
-										},
-										"table_name": {
-											"value": "@pipeline().parameters.target_table",
 											"type": "Expression"
 										}
 									}
@@ -167,20 +144,6 @@
 										"type": "SnowflakeExportCopyCommand"
 									}
 								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
-									"type": "DatasetReference",
-									"parameters": {
-										"schema_name": {
-											"value": "@pipeline().parameters.target_table_schema",
-											"type": "Expression"
-										},
-										"table_name": {
-											"value": "@pipeline().parameters.target_table",
-											"type": "Expression"
-										}
-									}
-								},
 								"firstRowOnly": false
 							}
 						},
@@ -212,14 +175,6 @@
 									},
 									"exportSettings": {
 										"type": "SnowflakeExportCopyCommand"
-									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
-									"type": "DatasetReference",
-									"parameters": {
-										"schema_name": "INT",
-										"table_name": "ACTIVITY_LOG"
 									}
 								},
 								"firstRowOnly": false
@@ -256,20 +211,6 @@
 						},
 						"exportSettings": {
 							"type": "SnowflakeExportCopyCommand"
-						}
-					},
-					"dataset": {
-						"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
-						"type": "DatasetReference",
-						"parameters": {
-							"schema_name": {
-								"value": "@pipeline().parameters.target_table_schema",
-								"type": "Expression"
-							},
-							"table_name": {
-								"value": "@pipeline().parameters.target_table",
-								"type": "Expression"
-							}
 						}
 					}
 				}

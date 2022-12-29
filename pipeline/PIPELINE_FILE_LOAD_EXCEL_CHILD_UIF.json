@@ -73,14 +73,6 @@
 										"type": "SnowflakeExportCopyCommand"
 									}
 								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
-									"type": "DatasetReference",
-									"parameters": {
-										"schema_name": "STAGING_GBL",
-										"table_name": "SP_ACTIVITY_LOG"
-									}
-								},
 								"firstRowOnly": false
 							}
 						}

@@ -173,14 +173,6 @@
 							"type": "SnowflakeExportCopyCommand"
 						}
 					},
-					"dataset": {
-						"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
-						"type": "DatasetReference",
-						"parameters": {
-							"schema_name": "INT_METADATA",
-							"table_name": "COUNTRY_PRODUCT_SNAPSHOT_COUNT"
-						}
-					},
 					"firstRowOnly": false
 				}
 			},

@@ -93,24 +93,6 @@
 												"type": "DelimitedTextReadSettings"
 											}
 										},
-										"dataset": {
-											"referenceName": "GET_FILE_CONTENT_UIF",
-											"type": "DatasetReference",
-											"parameters": {
-												"container_name": {
-													"value": "@pipeline().parameters.adls_container",
-													"type": "Expression"
-												},
-												"refine_path": {
-													"value": "@concat(split(pipeline().parameters.adls_folder, 'Raw')[0],'Refine/logs/DQ/',formatDateTime(utcnow(),'yyyyMMdd/'),'error_logs/')",
-													"type": "Expression"
-												},
-												"file_name": {
-													"value": "@activity('Filter Error Log Summary File ND').output.value[0].name",
-													"type": "Expression"
-												}
-											}
-										},
 										"firstRowOnly": false
 									}
 								},
@@ -186,16 +168,6 @@
 									},
 									"userProperties": [],
 									"typeProperties": {
-										"dataset": {
-											"referenceName": "DATASET_FILE_SYSTEM_BINARY_FOLDER_UIF",
-											"type": "DatasetReference",
-											"parameters": {
-												"folder_name": {
-													"value": "@pipeline().parameters.source_folder_path",
-													"type": "Expression"
-												}
-											}
-										},
 										"fieldList": [
 											"childItems"
 										],
@@ -353,24 +325,6 @@
 											},
 											"formatSettings": {
 												"type": "DelimitedTextReadSettings"
-											}
-										},
-										"dataset": {
-											"referenceName": "GET_FILE_CONTENT_UIF",
-											"type": "DatasetReference",
-											"parameters": {
-												"container_name": {
-													"value": "@pipeline().parameters.adls_container",
-													"type": "Expression"
-												},
-												"refine_path": {
-													"value": "@concat(split(pipeline().parameters.adls_folder, 'Raw')[0],'Refine/logs/DQ/',formatDateTime(utcnow(),'yyyyMMdd/'),'error_logs/')",
-													"type": "Expression"
-												},
-												"file_name": {
-													"value": "@activity('Filter Error Log Summary File ADLS').output.value[0].name",
-													"type": "Expression"
-												}
 											}
 										},
 										"firstRowOnly": false
@@ -619,24 +573,6 @@
 											},
 											"formatSettings": {
 												"type": "DelimitedTextReadSettings"
-											}
-										},
-										"dataset": {
-											"referenceName": "GET_FILE_CONTENT_UIF",
-											"type": "DatasetReference",
-											"parameters": {
-												"container_name": {
-													"value": "@pipeline().parameters.adls_container",
-													"type": "Expression"
-												},
-												"refine_path": {
-													"value": "@concat(split(pipeline().parameters.adls_folder, 'Raw')[0],'Refine/logs/DQ/',formatDateTime(utcnow(),'yyyyMMdd/'),'error_logs/')",
-													"type": "Expression"
-												},
-												"file_name": {
-													"value": "@activity('Filter Error Log Summary File SFTP').output.value[0].name",
-													"type": "Expression"
-												}
 											}
 										},
 										"firstRowOnly": false

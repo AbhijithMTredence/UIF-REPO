@@ -52,23 +52,7 @@
 									},
 									"path": "sf-staging/UIF"
 								}
-							},
-							"outputs": [
-								{
-									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
-									"type": "DatasetReference",
-									"parameters": {
-										"schema_name": {
-											"value": "@split(pipeline().parameters.snowflake_table,'.')[0]",
-											"type": "Expression"
-										},
-										"table_name": {
-											"value": "@split(pipeline().parameters.snowflake_table,'.')[1]",
-											"type": "Expression"
-										}
-									}
-								}
-							]
+							}
 						}
 					],
 					"ifTrueActivities": [

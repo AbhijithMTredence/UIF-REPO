@@ -159,31 +159,7 @@
 											}
 										},
 										"enableStaging": false
-									},
-									"inputs": [
-										{
-											"referenceName": "DATASET_FILE_SYSTEM_BINARY_FOLDER_UIF",
-											"type": "DatasetReference",
-											"parameters": {
-												"folder_name": {
-													"value": "@toLower('')",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "DATASET_FILE_SYSTEM_BINARY_FOLDER_UIF",
-											"type": "DatasetReference",
-											"parameters": {
-												"folder_name": {
-													"value": "@concat(pipeline().parameters.source_folder_path, '/archive/', formatDateTime(utcNow(), 'yyyyMMdd/'))",
-													"type": "Expression"
-												}
-											}
-										}
-									]
+									}
 								}
 							]
 						},

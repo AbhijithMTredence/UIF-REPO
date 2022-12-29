@@ -213,10 +213,6 @@
 						"exportSettings": {
 							"type": "SnowflakeExportCopyCommand"
 						}
-					},
-					"dataset": {
-						"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-						"type": "DatasetReference"
 					}
 				}
 			},
@@ -255,10 +251,6 @@
 						"exportSettings": {
 							"type": "SnowflakeExportCopyCommand"
 						}
-					},
-					"dataset": {
-						"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-						"type": "DatasetReference"
 					}
 				}
 			},
@@ -312,23 +304,7 @@
 						"path": "sf-staging/UIF"
 					},
 					"enableSkipIncompatibleRow": true
-				},
-				"outputs": [
-					{
-						"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
-						"type": "DatasetReference",
-						"parameters": {
-							"schema_name": {
-								"value": "@pipeline().parameters.stage_schema",
-								"type": "Expression"
-							},
-							"table_name": {
-								"value": "@pipeline().parameters.target_table",
-								"type": "Expression"
-							}
-						}
-					}
-				]
+				}
 			},
 			{
 				"name": "JOB_FAILURE",
@@ -360,10 +336,6 @@
 							"type": "SnowflakeExportCopyCommand"
 						}
 					},
-					"dataset": {
-						"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-						"type": "DatasetReference"
-					},
 					"firstRowOnly": true
 				}
 			},
@@ -393,10 +365,6 @@
 						"exportSettings": {
 							"type": "SnowflakeExportCopyCommand"
 						}
-					},
-					"dataset": {
-						"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-						"type": "DatasetReference"
 					}
 				}
 			},
@@ -468,14 +436,6 @@
 						},
 						"exportSettings": {
 							"type": "SnowflakeExportCopyCommand"
-						}
-					},
-					"dataset": {
-						"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
-						"type": "DatasetReference",
-						"parameters": {
-							"schema_name": "STAGING_GBL",
-							"table_name": "ERROR_LOG"
 						}
 					}
 				}

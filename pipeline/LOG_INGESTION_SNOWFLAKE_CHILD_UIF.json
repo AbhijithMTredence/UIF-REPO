@@ -59,42 +59,8 @@
 															"type": "SnowflakeImportCopyCommand"
 														}
 													},
-													"enableStaging": false,
-													"translator": {
-														"type": "TabularTranslator",
-														"mapComplexValuesToString": false
-													}
-												},
-												"inputs": [
-													{
-														"referenceName": "DATASET_BLOB_JSON_FILE_UIF",
-														"type": "DatasetReference",
-														"parameters": {
-															"container_name": {
-																"value": "@pipeline().parameters.adls_container",
-																"type": "Expression"
-															},
-															"folder_name": {
-																"value": "@pipeline().parameters.filepath",
-																"type": "Expression"
-															},
-															"file_name": {
-																"value": "@item().name",
-																"type": "Expression"
-															}
-														}
-													}
-												],
-												"outputs": [
-													{
-														"referenceName": "DATASET_SNOWFLAKE_TABLE_COMMON_UIF",
-														"type": "DatasetReference",
-														"parameters": {
-															"schema_name": "STAGING_RGMOPS",
-															"table_name": "TBL_OP_LOG"
-														}
-													}
-												]
+													"enableStaging": false
+												}
 											}
 										]
 									},
@@ -302,16 +268,6 @@
 																"value": "@item().name",
 																"type": "Expression"
 															}
-														}
-													}
-												],
-												"outputs": [
-													{
-														"referenceName": "DATASET_SNOWFLAKE_TABLE_COMMON_UIF",
-														"type": "DatasetReference",
-														"parameters": {
-															"schema_name": "STAGING_RGMOPS",
-															"table_name": "TBL_DQ_LOG"
 														}
 													}
 												]

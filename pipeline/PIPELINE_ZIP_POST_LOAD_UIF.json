@@ -35,20 +35,6 @@
 									"exportSettings": {
 										"type": "SnowflakeExportCopyCommand"
 									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
-									"type": "DatasetReference",
-									"parameters": {
-										"schema_name": {
-											"value": "@split(pipeline().parameters.post_sp_load,'.')[0]",
-											"type": "Expression"
-										},
-										"table_name": {
-											"value": "@split(pipeline().parameters.post_sp_load,'.')[1]",
-											"type": "Expression"
-										}
-									}
 								}
 							}
 						}
