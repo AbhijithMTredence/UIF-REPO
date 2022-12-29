@@ -354,71 +354,6 @@
 							}
 						},
 						{
-							"name": "ForEach_ZIP",
-							"type": "ForEach",
-							"dependsOn": [
-								{
-									"activity": "UNZIP_FILE_FILTER",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"userProperties": [],
-							"typeProperties": {
-								"items": {
-									"value": "@activity('UNZIP_FILE_FILTER').output.Value",
-									"type": "Expression"
-								},
-								"isSequential": true,
-								"activities": [
-									{
-										"name": "MANAGE_FILES",
-										"type": "ExecutePipeline",
-										"dependsOn": [],
-										"userProperties": [],
-										"typeProperties": {
-											"pipeline": {
-												"referenceName": "PIPELINE_ZIP_SUBFILES_LOAD_UIF",
-												"type": "PipelineReference"
-											},
-											"waitOnCompletion": true,
-											"parameters": {
-												"internal_files": {
-													"value": "@pipeline().parameters.internal_files",
-													"type": "Expression"
-												},
-												"adls_file_zip": {
-													"value": "@item().name",
-													"type": "Expression"
-												},
-												"adls_container_unzip": {
-													"value": "@pipeline().parameters.adls_container_unzip",
-													"type": "Expression"
-												},
-												"adls_folder_unzip": {
-													"value": "@pipeline().parameters.adls_folder_unzip",
-													"type": "Expression"
-												},
-												"flow_key": {
-													"value": "@pipeline().parameters.flow_key",
-													"type": "Expression"
-												},
-												"run_key": {
-													"value": "@pipeline().parameters.run_key",
-													"type": "Expression"
-												},
-												"job_key": {
-													"value": "@pipeline().parameters.job_key",
-													"type": "Expression"
-												}
-											}
-										}
-									}
-								]
-							}
-						},
-						{
 							"name": "UNZIP_FILE_FILTER",
 							"type": "Filter",
 							"dependsOn": [
@@ -439,6 +374,26 @@
 									"value": "@contains(item().name, replace(pipeline().parameters.fs_zip_file_name,'.zip',''))",
 									"type": "Expression"
 								}
+							}
+						},
+						{
+							"name": "Execute Pipeline1",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "UNZIP_FILE_FILTER",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pipeline1",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
 							}
 						}
 					]
