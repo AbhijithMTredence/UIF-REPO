@@ -198,7 +198,7 @@
 					"isSequential": false,
 					"activities": [
 						{
-							"name": "SQL_LOAD_copy1",
+							"name": "SQL_LOAD",
 							"type": "ExecutePipeline",
 							"dependsOn": [],
 							"userProperties": [],
