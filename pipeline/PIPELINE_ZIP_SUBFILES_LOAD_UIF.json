@@ -48,16 +48,9 @@
 										"value": "CSV",
 										"activities": [
 											{
-												"name": "COPY_CSV_TO_SNOWFLAKE",
+												"name": "COPY_CSV_TO_ADLS",
 												"type": "Copy",
-												"dependsOn": [
-													{
-														"activity": "GENERATE_TABLE",
-														"dependencyConditions": [
-															"Succeeded"
-														]
-													}
-												],
+												"dependsOn": [],
 												"policy": {
 													"timeout": "7.00:00:00",
 													"retry": 0,
@@ -79,13 +72,9 @@
 														}
 													},
 													"sink": {
-														"type": "SnowflakeSink",
-														"preCopyScript": {
-															"value": "TRUNCATE TABLE @{item().snowflake_table}",
-															"type": "Expression"
-														},
-														"importSettings": {
-															"type": "SnowflakeImportCopyCommand"
+														"type": "BinarySink",
+														"storeSettings": {
+															"type": "AzureBlobStorageWriteSettings"
 														}
 													},
 													"enableStaging": true,
@@ -119,49 +108,20 @@
 												],
 												"outputs": [
 													{
-														"referenceName": "DATASET_SNOWFLAKE_TABLE_UIF",
+														"referenceName": "DATASET_ADLS_ZIP_BINARY_FOLDER_UIF",
 														"type": "DatasetReference",
 														"parameters": {
-															"schema_name": {
-																"value": "@split(item().snowflake_table,'.')[0]",
+															"container_name": {
+																"value": "@pipeline().parameters.adls_container_unzip",
 																"type": "Expression"
 															},
-															"table_name": {
-																"value": "@split(item().snowflake_table,'.')[1]",
+															"folder_name": {
+																"value": "@pipeline().parameters.adls_folder_unzip",
 																"type": "Expression"
 															}
 														}
 													}
 												]
-											},
-											{
-												"name": "GENERATE_TABLE",
-												"type": "Lookup",
-												"dependsOn": [],
-												"policy": {
-													"timeout": "7.00:00:00",
-													"retry": 0,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"source": {
-														"type": "SnowflakeSource",
-														"query": {
-															"value": "CALL staging_gbl.sp_generate_tbl_def(@{concat('''',split(item().snowflake_table,'.')[0],'''')},@{concat('''',split(item().snowflake_table,'.')[1],'''')},@{concat('''',item().table_load,'''')},@{concat('''',item().table_def,'''')},@{pipeline().parameters.flow_key}, @{pipeline().parameters.run_key}, @{pipeline().parameters.job_key})",
-															"type": "Expression"
-														},
-														"exportSettings": {
-															"type": "SnowflakeExportCopyCommand"
-														}
-													},
-													"dataset": {
-														"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-														"type": "DatasetReference"
-													}
-												}
 											}
 										]
 									},
@@ -430,14 +390,7 @@
 															"type": "SnowflakeImportCopyCommand"
 														}
 													},
-													"enableStaging": true,
-													"stagingSettings": {
-														"linkedServiceName": {
-															"referenceName": "BLOB_SAS",
-															"type": "LinkedServiceReference"
-														},
-														"path": "sf-staging/UIF"
-													}
+													"enableStaging": true
 												},
 												"inputs": [
 													{
