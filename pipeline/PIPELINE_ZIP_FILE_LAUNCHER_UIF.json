@@ -265,6 +265,9 @@
 				"type": "String"
 			}
 		},
+		"folder": {
+			"name": "UIF/ZIP_LOAD_FLOW"
+		},
 		"annotations": []
 	}
 }
