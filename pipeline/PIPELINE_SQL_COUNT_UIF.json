@@ -203,7 +203,7 @@
 			}
 		},
 		"folder": {
-			"name": "UIF/MAIN_PIPELINE_JOBS/TABLE_LOAD_FLOW"
+			"name": "UIF/TABLE_LOAD_FLOW"
 		},
 		"annotations": []
 	}
