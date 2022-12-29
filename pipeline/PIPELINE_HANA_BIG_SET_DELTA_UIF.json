@@ -5,14 +5,7 @@
 			{
 				"name": "SPLIT_DATA_AND_LOAD",
 				"type": "ExecutePipeline",
-				"dependsOn": [
-					{
-						"activity": "CHECK_DELTA",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"dependsOn": [],
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
@@ -66,133 +59,6 @@
 							"type": "Expression"
 						}
 					}
-				}
-			},
-			{
-				"name": "CHECK_DELTA",
-				"type": "IfCondition",
-				"dependsOn": [],
-				"userProperties": [],
-				"typeProperties": {
-					"expression": {
-						"value": "@equals(pipeline().parameters.if_delta,'1')",
-						"type": "Expression"
-					},
-					"ifFalseActivities": [
-						{
-							"name": "NO_DELTA_CONDITION",
-							"type": "SetVariable",
-							"dependsOn": [],
-							"userProperties": [],
-							"typeProperties": {
-								"variableName": "delta_condition",
-								"value": "1=1"
-							}
-						}
-					],
-					"ifTrueActivities": [
-						{
-							"name": "GET_DELTA_CONDITION",
-							"type": "Lookup",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "7.00:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"source": {
-									"type": "SnowflakeSource",
-									"query": {
-										"value": "CALL STAGING_GBL.SP_GET_STAGE_DELTA_CONDITION('@{pipeline().parameters.source_table}', 'DELTA', @{pipeline().parameters.run_key} , @{pipeline().parameters.job_key}, '@{pipeline().parameters.snowflake_table}')",
-										"type": "Expression"
-									},
-									"exportSettings": {
-										"type": "SnowflakeExportCopyCommand"
-									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-									"type": "DatasetReference"
-								},
-								"firstRowOnly": false
-							}
-						},
-						{
-							"name": "DELTA_CONDITION",
-							"type": "SetVariable",
-							"dependsOn": [
-								{
-									"activity": "GET_DELTA_CONDITION",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"userProperties": [],
-							"typeProperties": {
-								"variableName": "delta_condition",
-								"value": {
-									"value": "@{activity('GET_DELTA_CONDITION').output.value[0].SP_GET_STAGE_DELTA_CONDITION}",
-									"type": "Expression"
-								}
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "SET_DELTA",
-				"type": "IfCondition",
-				"dependsOn": [
-					{
-						"activity": "SPLIT_DATA_AND_LOAD",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"expression": {
-						"value": "@equals(pipeline().parameters.if_delta,'1')",
-						"type": "Expression"
-					},
-					"ifTrueActivities": [
-						{
-							"name": "SET_DELTA_CONDITION",
-							"type": "Lookup",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "7.00:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"source": {
-									"type": "SnowflakeSource",
-									"query": {
-										"value": "CALL STAGING_GBL.SP_SET_STAGE_DELTA_CONDITION('@{pipeline().parameters.source_table}', @{pipeline().parameters.run_key}, @{pipeline().parameters.job_key}, '@{pipeline().parameters.snowflake_table}')",
-										"type": "Expression"
-									},
-									"exportSettings": {
-										"type": "SnowflakeExportCopyCommand"
-									}
-								},
-								"dataset": {
-									"referenceName": "DATASET_SNOWFLAKE_STORED_PROC_UIF",
-									"type": "DatasetReference"
-								},
-								"firstRowOnly": false
-							}
-						}
-					]
 				}
 			}
 		],
