@@ -113,7 +113,7 @@
 					"isSequential": false,
 					"activities": [
 						{
-							"name": "HANA_LOAD_copy1",
+							"name": "HANA_LOAD",
 							"type": "ExecutePipeline",
 							"dependsOn": [],
 							"userProperties": [],
