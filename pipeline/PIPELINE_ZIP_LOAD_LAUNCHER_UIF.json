@@ -31,11 +31,17 @@
 						"type": "DatasetReference",
 						"parameters": {
 							"container_name": {
-								"value": "drivers/@{toLower(pipeline().globalParameters.env)}",
+								"value": "@pipeline().parameters.container",
 								"type": "Expression"
 							},
-							"folder_name": "config/file_movement",
-							"file_name": "config_execution_zip_load.json"
+							"folder_name": {
+								"value": "@pipeline().parameters.folder",
+								"type": "Expression"
+							},
+							"file_name": {
+								"value": "@pipeline().parameters.file",
+								"type": "Expression"
+							}
 						}
 					},
 					"firstRowOnly": false
@@ -164,6 +170,18 @@
 			},
 			"Jobs": {
 				"type": "string"
+			},
+			"container": {
+				"type": "string",
+				"defaultValue": "driver"
+			},
+			"folder": {
+				"type": "string",
+				"defaultValue": "file_movement"
+			},
+			"file": {
+				"type": "string",
+				"defaultValue": "config_execution_zip_load.json"
 			}
 		},
 		"variables": {
