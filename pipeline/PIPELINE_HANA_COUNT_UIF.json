@@ -14,7 +14,7 @@
 					},
 					"ifFalseActivities": [
 						{
-							"name": "COPY_TO_SNOWFLAKE_QRY",
+							"name": "COPY_TO_ADLS_QRY",
 							"type": "Copy",
 							"dependsOn": [],
 							"policy": {
