@@ -152,7 +152,7 @@
 													"sink": {
 														"type": "BinarySink",
 														"storeSettings": {
-															"type": "AzureBlobStorageWriteSettings"
+															"type": "AzureBlobFSWriteSettings"
 														}
 													},
 													"enableStaging": true,
@@ -190,7 +190,7 @@
 												],
 												"outputs": [
 													{
-														"referenceName": "DATASET_ADLS_ZIP_BINARY_FOLDER_UIF",
+														"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
 														"type": "DatasetReference",
 														"parameters": {
 															"container_name": {
