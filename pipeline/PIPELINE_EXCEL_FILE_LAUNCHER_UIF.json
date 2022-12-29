@@ -122,7 +122,7 @@
 										"type": "AzureBlobFSReadSettings",
 										"recursive": true,
 										"wildcardFileName": {
-											"value": "@replace(pipeline().parameters.name,'.excel','*.excel')",
+											"value": "@replace(pipeline().parameters.name,'.xlsx','*.xlsx')",
 											"type": "Expression"
 										},
 										"deleteFilesAfterCompletion": false
