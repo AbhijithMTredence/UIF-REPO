@@ -16,11 +16,15 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "DATASET_FILE_SYSTEM_BINARY_FOLDER_UIF",
+						"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
 						"type": "DatasetReference",
 						"parameters": {
+							"container_name": {
+								"value": "@pipeline().parameters.adls_container_unzip",
+								"type": "Expression"
+							},
 							"folder_name": {
-								"value": "@pipeline().parameters.fs_folder_path_zip",
+								"value": "@pipeline().parameters.adls_folder_unzip",
 								"type": "Expression"
 							}
 						}
@@ -29,8 +33,7 @@
 						"childItems"
 					],
 					"storeSettings": {
-						"type": "FileServerReadSettings",
-						"recursive": true,
+						"type": "AzureBlobFSReadSettings",
 						"enablePartitionDiscovery": false
 					},
 					"formatSettings": {
