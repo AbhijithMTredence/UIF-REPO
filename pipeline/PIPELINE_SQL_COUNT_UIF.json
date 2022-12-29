@@ -26,11 +26,6 @@
 							},
 							"userProperties": [],
 							"typeProperties": {
-								"source": {
-									"type": "SqlServerSource",
-									"queryTimeout": "02:00:00",
-									"partitionOption": "None"
-								},
 								"sink": {
 									"type": "BinarySink",
 									"storeSettings": {
@@ -46,22 +41,6 @@
 									"path": "sf-staging/UIF"
 								}
 							},
-							"inputs": [
-								{
-									"referenceName": "DATASET_SQL_SERVER_UIF",
-									"type": "DatasetReference",
-									"parameters": {
-										"database": {
-											"value": "@split(pipeline().parameters.source_table,'.')[0]",
-											"type": "Expression"
-										},
-										"table_name": {
-											"value": "@split(pipeline().parameters.source_table,'.')[1]",
-											"type": "Expression"
-										}
-									}
-								}
-							],
 							"outputs": [
 								{
 									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
@@ -118,22 +97,6 @@
 									"path": "sf-staging/UIF"
 								}
 							},
-							"inputs": [
-								{
-									"referenceName": "DATASET_SQL_SERVER_UIF",
-									"type": "DatasetReference",
-									"parameters": {
-										"database": {
-											"value": "@split(pipeline().parameters.source_table,'.')[0]",
-											"type": "Expression"
-										},
-										"table_name": {
-											"value": "@split(pipeline().parameters.source_table,'.')[1]",
-											"type": "Expression"
-										}
-									}
-								}
-							],
 							"outputs": [
 								{
 									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
