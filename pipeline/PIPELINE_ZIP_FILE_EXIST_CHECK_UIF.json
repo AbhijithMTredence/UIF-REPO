@@ -307,81 +307,11 @@
 							]
 						},
 						{
-							"name": "UNZIP_FILE_LIST",
-							"type": "GetMetadata",
-							"dependsOn": [
-								{
-									"activity": "UNZIP_FILES",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "7.00:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"dataset": {
-									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
-									"type": "DatasetReference",
-									"parameters": {
-										"container_name": {
-											"value": "@pipeline().parameters.adls_container_zip",
-											"type": "Expression"
-										},
-										"folder_name": {
-											"value": "@pipeline().parameters.adls_folder_zip",
-											"type": "Expression"
-										}
-									}
-								},
-								"fieldList": [
-									"childItems"
-								],
-								"storeSettings": {
-									"type": "AzureBlobFSReadSettings",
-									"recursive": true,
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "BinaryReadSettings"
-								}
-							}
-						},
-						{
-							"name": "UNZIP_FILE_FILTER",
-							"type": "Filter",
-							"dependsOn": [
-								{
-									"activity": "UNZIP_FILE_LIST",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"userProperties": [],
-							"typeProperties": {
-								"items": {
-									"value": "@activity('UNZIP_FILE_LIST').output.childItems",
-									"type": "Expression"
-								},
-								"condition": {
-									"value": "@contains(item().name, replace(pipeline().parameters.fs_zip_file_name,'.zip',''))",
-									"type": "Expression"
-								}
-							}
-						},
-						{
 							"name": "MANAGE_FILES",
 							"type": "ExecutePipeline",
 							"dependsOn": [
 								{
-									"activity": "UNZIP_FILE_FILTER",
+									"activity": "UNZIP_FILES",
 									"dependencyConditions": [
 										"Succeeded"
 									]
