@@ -25,7 +25,7 @@
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "COPY_RAW_ADLS_EXCEL_REFINE",
+									"activity": "COPY_RAW_ADLS_CSV_REFINE",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -101,7 +101,7 @@
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "COPY_RAW_ADLS_EXCEL_REFINE",
+									"activity": "COPY_RAW_ADLS_CSV_REFINE",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -173,7 +173,7 @@
 							]
 						},
 						{
-							"name": "COPY_FS_ADLS_EXCEL_RAW",
+							"name": "COPY_FS_ADLS_CSV_RAW",
 							"type": "Copy",
 							"dependsOn": [],
 							"policy": {
@@ -242,11 +242,11 @@
 							]
 						},
 						{
-							"name": "COPY_RAW_ADLS_EXCEL_REFINE",
+							"name": "COPY_RAW_ADLS_CSV_REFINE",
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "COPY_FS_ADLS_EXCEL_RAW",
+									"activity": "COPY_FS_ADLS_CSV_RAW",
 									"dependencyConditions": [
 										"Succeeded"
 									]
