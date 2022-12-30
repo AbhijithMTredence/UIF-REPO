@@ -328,6 +328,12 @@
 			},
 			"adls_file_zip": {
 				"type": "string"
+			},
+			"adls_folder_zip": {
+				"type": "string"
+			},
+			"fs_zip_file_name": {
+				"type": "string"
 			}
 		},
 		"variables": {
