@@ -25,7 +25,7 @@
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "COPY_FS_ADLS_CSV_ADLS",
+									"activity": "COPY_RAW_ADLS_EXCEL_REFINE",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -101,7 +101,7 @@
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "COPY_FS_ADLS_CSV_ADLS",
+									"activity": "COPY_RAW_ADLS_EXCEL_REFINE",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -173,7 +173,7 @@
 							]
 						},
 						{
-							"name": "COPY_FS_ADLS_CSV_ADLS",
+							"name": "COPY_FS_ADLS_EXCEL_RAW",
 							"type": "Copy",
 							"dependsOn": [],
 							"policy": {
@@ -235,6 +235,82 @@
 										},
 										"folder_name": {
 											"value": "@concat(pipeline().parameters.adls_folder,'/', formatDateTime(utcNow(), 'yyyy/MM/dd'))",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "COPY_RAW_ADLS_EXCEL_REFINE",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "COPY_FS_ADLS_EXCEL_RAW",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"wildcardFileName": {
+											"value": "@concat(split(pipeline().parameters.name, '.')[0],'*')",
+											"type": "Expression"
+										},
+										"deleteFilesAfterCompletion": false
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@concat(pipeline().parameters.adls_folder, '/', formatDateTime(utcNow(), 'yyyy/MM/dd'))",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DATASET_ADLS_BINARY_FOLDER_UIF",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.adls_container",
+											"type": "Expression"
+										},
+										"folder_name": {
+											"value": "@concat(replace(pipeline().parameters.adls_folder,'Raw','Refine'),'/',formatDateTime(utcnow(), 'yyyy/MM/dd'))\n",
 											"type": "Expression"
 										}
 									}
